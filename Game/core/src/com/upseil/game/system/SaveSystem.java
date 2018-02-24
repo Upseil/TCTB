@@ -1,7 +1,6 @@
 package com.upseil.game.system;
 
 import com.artemis.ComponentMapper;
-import com.badlogic.gdx.utils.Clipboard;
 import com.upseil.game.Savegame;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
@@ -15,8 +14,8 @@ public class SaveSystem extends AbstractSaveSystem<Savegame> {
     private TagManager<Tag> tagManager;
     private ComponentMapper<GameState> gameStateMapper;
     
-    public SaveSystem(Writer<Savegame> mapper, Clipboard systemAccessClipboard, SaveConfig config) {
-        super(mapper, systemAccessClipboard, config);
+    public SaveSystem(Writer<Savegame> mapper, SaveConfig config) {
+        super(mapper, config);
     }
 
     @Override

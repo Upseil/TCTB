@@ -1,7 +1,7 @@
 // Game Parent
 
 ext {
-    workingTitle = "WorkingTitle"
+    workingTitle = "TCTB"
 	
 	gradleTarget = '3.2.1'
 	gwtGradleTarget = '0.6'
@@ -26,7 +26,7 @@ apply from: "$upseilGdxPath/upseilgdx-setup.gradle"
 allprojects {
     apply plugin: "jacoco"
     
-    group = 'com.upseil.working-title'
+    group = 'com.upseil.tctb'
     version = '0.1.0'
 }
 

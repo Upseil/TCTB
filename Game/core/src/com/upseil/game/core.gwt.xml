@@ -6,7 +6,8 @@
 	<extend-configuration-property name="gdx.reflect.include" value="com.upseil.game.domain" />
 	
 	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.component" />
-	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.system" />
+    <extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.scene2d" />
+    <extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.system" />
 	
 	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.GameConfig" />
 </module>

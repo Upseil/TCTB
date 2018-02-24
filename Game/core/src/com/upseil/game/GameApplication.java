@@ -6,7 +6,6 @@ import com.artemis.WorldConfigurationBuilder;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.Clipboard;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.system.EntityFactory;
 import com.upseil.game.system.GameInitializer;
@@ -24,15 +23,13 @@ import com.upseil.gdx.scene2d.util.DividerBuilder;
 public class GameApplication extends ArtemisApplicationAdapter {
     
     private final SerializationContext serializationContext;
-    private final Clipboard systemAccessClipboard;
     
     private GameConfig config;
     private I18NBundle hudMessages;
     private Skin skin;
     
-    public GameApplication(SerializationContext serializationContext, Clipboard systemAccessClipboard) {
+    public GameApplication(SerializationContext serializationContext) {
         this.serializationContext = serializationContext;
-        this.systemAccessClipboard = systemAccessClipboard;
     }
     
     @Override
@@ -58,10 +55,10 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 
                 // TODO Add Systems
                 
-                .with(new SaveSystem(serializationContext.getSavegameMapper(), systemAccessClipboard, config.getSavegameConfig()))
+                .with(new SaveSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
                 
                 .with(new LayeredInputSystem())
-                .with(new ClearScreenSystem())
+                .with(new ClearScreenSystem(skin.getColor("t-screen-background")))
                 .with(new LayeredSceneRenderSystem<>(new SpriteBatch()))
                 
                 .build();

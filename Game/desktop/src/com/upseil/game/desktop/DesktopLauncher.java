@@ -11,15 +11,16 @@ public class DesktopLauncher {
     
     public static void main(String[] args) {
         LwjglApplicationConfiguration configuration = new LwjglApplicationConfiguration();
-        configuration.title = "Game Title";
-        configuration.width = 1100;
-        configuration.height = 700;
+        configuration.title = "Three Colors - Three Buttons";
+        configuration.width = 800;
+        configuration.height = 800;
+        configuration.resizable = false;
         
         DesktopCompressingMapper<Savegame> savegameMapper = new DesktopCompressingMapper<>(Savegame.class);
         savegameMapper.setCompressing(true);
         
         SerializationContext context = new SerializationContext(savegameMapper);
-        new LwjglApplication(new GameApplication(context, /*systemAccessClipboard*/ null), configuration);
+        new LwjglApplication(new GameApplication(context), configuration);
     }
     
 }

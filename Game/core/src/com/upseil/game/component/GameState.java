@@ -1,18 +1,21 @@
 package com.upseil.game.component;
 
 import com.artemis.Component;
-import com.upseil.game.domain.Data;
 
 public class GameState extends Component {
     
-    private Data data;
+    private int score;
 
-    public Data getData() {
-        return data;
+    public int getScore() {
+        return score;
+    }
+    
+    public void incrementScore(int amount) {
+        score += amount;
     }
 
-    public void setData(Data data) {
-        this.data = data;
+    public void setScore(int score) {
+        this.score = score;
     }
     
 }

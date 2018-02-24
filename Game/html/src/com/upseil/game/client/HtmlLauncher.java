@@ -24,11 +24,10 @@ import com.upseil.game.Savegame;
 import com.upseil.game.SerializationContext;
 import com.upseil.gdx.gwt.serialization.HtmlCompressingMapper;
 import com.upseil.gdx.gwt.util.BrowserConsoleLogger;
-import com.upseil.gdx.gwt.util.SystemAccessClipboard;
 
 public class HtmlLauncher extends GwtApplication {
     
-    private static final String GameTitle = "Game Title";
+    private static final String GameTitle = "Three Colors - Three Buttons";
 
     public interface SavegameMapper extends ObjectMapper<Savegame> { }
     
@@ -59,7 +58,7 @@ public class HtmlLauncher extends GwtApplication {
         htmlSavegameMapper.setCompressing(true);
         
         SerializationContext context = new SerializationContext(htmlSavegameMapper);
-        return new GameApplication(context, new SystemAccessClipboard("clipboard-textarea", "clipboard"));
+        return new GameApplication(context);
     }
     
     private void setupResizing() {

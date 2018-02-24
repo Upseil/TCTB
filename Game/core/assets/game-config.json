@@ -1,8 +1,14 @@
 {
-	"initialValue": 7,
+    "HUD": {
+        "padding": 10,
+        "updateInterval": 0.1,
+        "buttonSize": 50,
+        "buttonLength": 600,
+        "counterSize": 30
+    },
 	
     "savegame": {
-        "saveStoreName": "TemplateSaves",
+        "saveStoreName": "TCTBSaves",
         "autoSaveSlot": "autoSave"
     },
     "backgroundBuilder": {

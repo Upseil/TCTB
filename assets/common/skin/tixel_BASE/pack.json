@@ -4,6 +4,7 @@
 	paddingY: 2,
 	stripWhitespaceX: true,
 	stripWhitespaceY: true,
-	filterMin: Linear,
+	filterMin: Nearest,
+	filterMag: Nearest,
 	silent: true
 }
