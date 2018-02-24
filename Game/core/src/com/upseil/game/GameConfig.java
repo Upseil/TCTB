@@ -9,6 +9,7 @@ import com.upseil.gdx.scene2d.util.DividerBuilder;
 
 public class GameConfig extends AbstractConfig {
     
+    private final GridConfig gridConfig;
     private final HUDConfig hudConfig;
 
     private final SaveConfig saveConfig;
@@ -18,12 +19,17 @@ public class GameConfig extends AbstractConfig {
 
     public GameConfig(String path) {
         super(path);
+        gridConfig = new GridConfig(getRawConfig().getChild("grid"));
         hudConfig = new HUDConfig(getRawConfig().getChild("HUD"));
         
         saveConfig = new SaveConfig(getRawConfig().getChild("savegame"));
         backgroundBuilderConfig = new BackgroundBuilder.Config(getRawConfig().getChild("backgroundBuilder"));
         borderBuilderConfig = new BorderBuilder.Config(getRawConfig().getChild("borderBuilder"));
         dividerBuilderConfig = new DividerBuilder.Config(getRawConfig().getChild("dividerBuilder"));
+    }
+    
+    public GridConfig getGridConfig() {
+        return gridConfig;
     }
     
     public HUDConfig getHUDConfig() {
@@ -44,6 +50,30 @@ public class GameConfig extends AbstractConfig {
     
     public DividerBuilder.Config getDividerBuilderConfig() {
         return dividerBuilderConfig;
+    }
+
+    public static class GridConfig extends AbstractConfig {
+
+        public GridConfig(RawConfig config) {
+            super(config);
+        }
+        
+        public int getGridSize() {
+            return getInt("gridSize");
+        }
+        
+        public int getGridPadding() {
+            return getInt("gridPadding");
+        }
+        
+        public float getCellSize() {
+            return getFloat("cellSize");
+        }
+        
+        public float getSpacing() {
+            return getFloat("spacing");
+        }
+        
     }
 
     public static class HUDConfig extends AbstractConfig {

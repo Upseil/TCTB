@@ -4,11 +4,13 @@ import com.artemis.BaseSystem;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
-import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.upseil.game.GameApplication;
 import com.upseil.game.GameConfig;
 import com.upseil.game.Layers;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
+import com.upseil.game.component.GridComponent;
+import com.upseil.game.domain.Grid;
 import com.upseil.game.scene2d.HUDStage;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
@@ -33,14 +35,22 @@ public class GameInitializer extends BaseSystem {
         tagManager.register(Tag.GameState, gameStateEntity);
         
         initializeHUD();
+        initializeGrid();
     }
 
     private void initializeHUD() {
-        Stage uiStage = new HUDStage(renderSystem.getGlobalBatch(), world);
+        GameApplication.HUD = new HUDStage(renderSystem.getGlobalBatch(), world);
         EntityEdit hud = world.createEntity().edit();
         hud.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
-        hud.create(Scene.class).initialize(uiStage);
-        hud.create(InputHandler.class).setProcessor(uiStage);
+        hud.create(Scene.class).initialize(GameApplication.HUD);
+        hud.create(InputHandler.class).setProcessor(GameApplication.HUD);
+    }
+
+    private void initializeGrid() {
+        int gridSize = config.getGridConfig().getGridSize();
+        Entity gridEntity = world.createEntity();
+        gridEntity.edit().add(new GridComponent().setGrid(new Grid(gridSize, gridSize)));
+        tagManager.register(Tag.Grid, gridEntity);
     }
 
     @Override

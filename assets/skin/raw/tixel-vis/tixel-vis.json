@@ -21,13 +21,16 @@
 		t-highlight-medium: {r: 0.075, g: 0.473, b: 0.664, a: 1},
 		t-highlight-dark:   {r: 0.052, g: 0.316, b: 0.443, a: 1},
 		
+		t-highlight-complementary:        {r: 0.850, g: 0.500, b: 0.050, a: 1},
+		t-highlight-complementary-medium: {r: 0.895, g: 0.369, b: 0.114, a: 1},
+		
 		t-disabled: t-medium-light,
 		
 		t-screen-background: t-medium,
 		
-		t-color0: {r: 1.00, g: 0.00, b: 0.00, a: 1},
-		t-color1: {r: 0.00, g: 1.00, b: 0.00, a: 1},
-		t-color2: {r: 0.00, g: 0.00, b: 1.00, a: 1},
+		t-color0: {r: 0.105, g: 0.631, b: 0.886, a: 1},
+		t-color1: {r: 0.855, g: 0.243, b: 0.243, a: 1},
+		t-color2: {r: 0.380, g: 0.930, b: 0.380, a: 1},
 		
 		black: t-black,
 		white: t-white

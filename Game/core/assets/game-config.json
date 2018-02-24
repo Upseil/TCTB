@@ -1,4 +1,11 @@
 {
+    "grid": {
+        "gridSize": 15,
+        "gridPadding": 10,
+        
+        "cellSize": 50,
+        "spacing": 10
+    },
     "HUD": {
         "padding": 10,
         "updateInterval": 0.1,

@@ -118,22 +118,22 @@ public class HUDStage extends Stage {
     
     public float getLeftWidth() {
         container.validate();
-        return container.getColumnWidth(0);
+        return container.getColumnWidth(0) + config.getPadding();
     }
     
     public float getRightWidth() {
         container.validate();
-        return container.getColumnWidth(container.getColumns() - 1);
+        return container.getColumnWidth(container.getColumns() - 1) + config.getPadding();
     }
     
     public float getTopHeight() {
         container.validate();
-        return container.getRowHeight(0);
+        return container.getRowHeight(0) + container.getRowHeight(1) + config.getPadding();
     }
     
     public float getBottomHeight() {
         container.validate();
-        return container.getRowHeight(container.getRows() - 1);
+        return container.getRowHeight(container.getRows() - 1) + config.getPadding();
     }
     
 }

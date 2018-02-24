@@ -7,11 +7,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
+import com.upseil.game.scene2d.HUDStage;
 import com.upseil.game.system.EntityFactory;
 import com.upseil.game.system.GameInitializer;
+import com.upseil.game.system.GridController;
 import com.upseil.game.system.LoadSystem;
 import com.upseil.game.system.SaveSystem;
 import com.upseil.gdx.artemis.ArtemisApplicationAdapter;
+import com.upseil.gdx.artemis.system.AllSubscriptionMisplacementWorkaround;
 import com.upseil.gdx.artemis.system.ClearScreenSystem;
 import com.upseil.gdx.artemis.system.LayeredInputSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
@@ -21,6 +24,8 @@ import com.upseil.gdx.scene2d.util.BorderBuilder;
 import com.upseil.gdx.scene2d.util.DividerBuilder;
 
 public class GameApplication extends ArtemisApplicationAdapter {
+    
+    public static HUDStage HUD;
     
     private final SerializationContext serializationContext;
     
@@ -48,12 +53,14 @@ public class GameApplication extends ArtemisApplicationAdapter {
     @Override
     protected World createWorld() {
         WorldConfiguration worldConfiguration = new WorldConfigurationBuilder()
+                .with(new AllSubscriptionMisplacementWorkaround())
+                
                 .with(new TagManager<Tag>())
                 .with(new EntityFactory())
                 .with(new GameInitializer())
                 .with(new LoadSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
                 
-                // TODO Add Systems
+                .with(new GridController())
                 
                 .with(new SaveSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
                 
