@@ -1,15 +1,13 @@
 {
 	com.badlogic.gdx.graphics.g2d.BitmapFont: {
-		small:   {file: vis-open-sans-18.fnt},
-		default: {file: vis-open-sans-21.fnt},
-		big:     {file: vis-open-sans-28.fnt},
+		default:      {file: vis-open-sans-21.fnt},
+		default-bold: {file: vis-open-sans-21_bold.fnt},
 		
-		default-bold: {file: vis-open-sans-21_bold.fnt}
+		big: {file: vis-open-sans-28.fnt}
 	},
 	com.badlogic.gdx.graphics.Color: {
 		a0:   {r: 0, g: 0, b: 0, a: 0.00},
 		a128: {r: 0, g: 0, b: 0, a: 0.50},
-		t-white-a153: {r: 1, g: 1, b: 1, a: 0.60},
 	
 		t-white:        {r: 1.00, g: 1.00, b: 1.00, a: 1},
 		t-light:        {r: 0.70, g: 0.70, b: 0.70, a: 1},
@@ -23,190 +21,45 @@
 		t-highlight-medium: {r: 0.075, g: 0.473, b: 0.664, a: 1},
 		t-highlight-dark:   {r: 0.052, g: 0.316, b: 0.443, a: 1},
 		
-		t-highlight-complementary:        {r: 0.850, g: 0.500, b: 0.050, a: 1},
-		t-highlight-complementary-medium: {r: 0.895, g: 0.369, b: 0.114, a: 1},
-		
-		t-info:    {r: 0.31, g: 0.31, b: 0.86, a: 1},
-		t-warning: {r: 0.90, g: 0.75, b: 0.08, a: 1},
-		t-severe:  {r: 0.78, g: 0.31, b: 0.31, a: 1},
-		t-error:   {r: 0.92, g: 0.18, b: 0.18, a: 1},
-		t-severe-light:  {r: 0.85, g: 0.52, b: 0.52, a: 1},
-		
-		t-survival:	   {r: 0.00, g: 0.60, b: 0.00, a: 1},
-		t-competition: {r: 0.92, g: 0.18, b: 0.18, a: 1},
+		t-disabled: t-medium-light,
 		
 		black: t-black,
-		white: t-white,
-		disabled: t-medium-light
+		white: t-white
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {
-		background:				   {name: t-dot,  color: t-medium},
-		background-a128:	   	   {name: t-dot,  color: a128},
-		background-padded:		   {name: t-base, color: t-medium},
-		background-t-dark:		   {name: t-dot,  color: t-dark},
-		background-t-black:		   {name: t-dot,  color: t-black},
-		background-t-highlight:	   {name: t-dot,  color: t-highlight},
-		background-t-medium-light: {name: t-dot,  color: t-medium-light},
-		
-		background-select-box:		 {name: t-select, color: t-medium},
-		background-window:			 {name: t-window, color: t-dark},
-		background-titleless-window: {name: t-titleless-window, color: t-dark},
-		background-window-resizable: {name: t-window-resize, color: t-dark},
-		stage-background-dialog:     {name: t-dot, color: t-white-a153},
-		
-		border: 	   {name: t-border, 	   color: t-highlight},
-		border-t-black:{name: t-border, 	   color: t-black},
-		border-bottom: {name: t-border-bottom, color: t-highlight},
-		border-top:    {name: t-border-top,    color: t-highlight},
-		border-left:   {name: t-border-left,   color: t-highlight},
-		border-right:  {name: t-border-right,  color: t-highlight},
-		
-		border-slim:   		{name: t-border-slim,        color: t-highlight},
-		border-slim-bottom: {name: t-border-slim-bottom, color: t-highlight},
-		border-slim-top:    {name: t-border-slim-top,    color: t-highlight},
-		border-slim-left:	{name: t-border-slim-left,   color: t-highlight},
-		border-slim-right:	{name: t-border-slim-right,  color: t-highlight},
-		
-		border-highlight:		  {name: t-border-highlight, color: t-highlight},
-		border-highlight-t-white: {name: t-border-highlight, color: t-white},
-		
-		list-selection: {name: t-dot, color: t-highlight},
-		cursor: {name: t-cursor, color: t-white},
-		text-selection: {name: t-dot, color: t-highlight-dark},
-		
 		button:				   {name: t-base, color: t-medium},
-		button-transparent:    {name: t-base, color: a0},
 		button-down:		   {name: t-base, color: t-highlight},
 		button-over:		   {name: t-base, color: t-medium-light},
 		button-over-medium:	   {name: t-base, color: t-medium},
 		button-over-highlight: {name: t-base, color: t-highlight-medium},
-		button-unsafe-down:    {name: t-base, color: t-severe},
-		button-unsafe-over:    {name: t-base, color: t-severe-light},
 		
-		check-box-off:  {name: t-check, color: t-medium},
-		check-box-over: {name: t-check, color: t-medium-light},
-		check-box-on:   {name: t-check, color: t-highlight},
-		
-		progress-bar-horizontal:		{name: t-vline-slim, color: t-medium},
-		progress-bar-filled-horizontal: {name: t-vline-slim, color: t-highlight},
-		progress-bar-vertical:		    {name: t-hline-slim, color: t-medium},
-		progress-bar-vertical-white:    {name: t-vline-slim, color: white},
-		progress-bar-filled-vertical:   {name: t-hline-slim, color: t-highlight},
-		
-		line-knob-vertical: 		 {name: t-vline-slim, color: black},
-		line-knob-vertical-white:	 {name: t-vline-slim, color: white},
-		round-knob: 				 {name: t-radio, color: t-light},
-		rect-knob-vertical-slim:	 {name: t-vknob-slim, color: black},
-		rect-knob-vertical: 		 {name: t-base,  color: t-medium},
-		rect-knob-vertical-over: 	 {name: t-base,  color: t-medium-light},
-		rect-knob-vertical-down: 	 {name: t-base,  color: t-highlight},
-		rect-knob-vertical-disabled: {name: t-base,  color: t-medium-dark},
-		
-		scroll-bar-vertical:	{name: t-hline-slim, color: t-medium},
 		scroll-knob-vertical:	{name: t-vknob, color: t-highlight-dark},
-		scroll-bar-horizontal:	{name: t-vline-slim, color: t-medium},
-		scroll-knob-horizontal: {name: t-hknob, color: t-highlight-dark},
-		
-		slider-horizontal: {name: t-hslider, color: t-medium-dark},
-		slider-vertical:   {name: t-vslider, color: t-medium-dark},
-		
-		splitpane-horizontal: {name: t-vslider, color: t-medium-dark},
-		splitpane-vertical:   {name: t-hslider, color: t-medium-dark},
-		
-		tree-minus:		{name: t-tree-minus, color: t-medium-light},
-		tree-plus:		{name: t-tree-plus,  color: t-medium-light},
-		tree-over:		{name: t-dot,        color: t-medium-dark},
-		tree-selection: {name: t-dot,        color: t-highlight}
-	},
-	com.upseil.gdx.scene2d.util.CompoundDrawable: {
-		background-dialog: {drawables: [background-window, border-slim]},
-		background-titleless-dialog: {drawables: [background-titleless-window, border-slim]}
-	},
+		scroll-knob-horizontal: {name: t-hknob, color: t-highlight-dark}
+	}
 	
 	com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
-		default: {down: button-down, up: button}
+		default: {down: button-down, up: button, over: button-over}
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
-		default: {up: button, down: button-down, over: button-over, disabled: button, font: default, fontColor: white, disabledFontColor: disabled},
-		big: {up: button, down: button-down, over: button-over, disabled: button, font: big, fontColor: white, disabledFontColor: disabled},
-		unsafe: {up: button, down: button-unsafe-down, over: button-unsafe-over, disabled: button, font: default, fontColor: white, disabledFontColor: disabled},
-		
-		toggle: 	   {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: disabled},
-		toggle-unsafe: {up: button, down: button-unsafe-down, over: button-unsafe-over, disabled: button, checked: button-unsafe-down, font: default, fontColor: disabled, checkedFontColor: white, disabledFontColor: disabled},
-		
-		tab:		   {up: button-transparent, down: button-down, over: button-over, disabled: button, checked: button-down, font: default-bold, fontColor: white, disabledFontColor: disabled}
+		default: {up: button, down: button-down, over: button-over, disabled: button, font: default, fontColor: white, disabledFontColor: t-disabled},
+		big:     {up: button, down: button-down, over: button-over, disabled: button, font: big, fontColor: white, disabledFontColor: t-disabled},
+		toggle:  {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: t-disabled}
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
-		default: {up: button, down: button-down}
+		default: {up: button, down: button-down, over: button-over}
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton$ImageTextButtonStyle: {
-		default: {up: button, down: button-down, over: button-over, disabled: button,                       font: default, fontColor: white, disabledFontColor: disabled},
-		toggle:  {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: disabled}
+		default: {up: button, down: button-down, over: button-over, disabled: button,                       font: default, fontColor: white, disabledFontColor: t-disabled},
+		toggle:  {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: t-disabled}
 	},
 	
 	com.badlogic.gdx.scenes.scene2d.ui.ScrollPane$ScrollPaneStyle: {
 		default: {vScrollKnob: scroll-knob-vertical, hScrollKnob: scroll-knob-horizontal}
 	},
 	
-	com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle: {
-		default: {selection: list-selection, font: default, fontColorSelected: white, fontColorUnselected: white}
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.SelectBox$SelectBoxStyle: {
-		default: {background: background-select-box, listStyle: default, scrollStyle: default, font: default, fontColor: white, disabledFontColor: disabled }
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.SplitPane$SplitPaneStyle: {
-		default-horizontal: {handle: splitpane-horizontal},
-		default-vertical:   {handle: splitpane-vertical}
-	},
-
-	com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle: {
-		default: {background: background-window, titleFont: default-bold, titleFontColor: white},
-		dialog: {background: background-dialog, titleFont: default-bold, titleFontColor: white},
-		simple-dialog: {background: background-dialog, titleFont: default, titleFontColor: white},
-		modal-dialog: {background: background-dialog, titleFont: default-bold, titleFontColor: white, stageBackground: stage-background-dialog},
-		titleless-modal-dialog : {background: background-titleless-dialog, stageBackground: stage-background-dialog, titleFont: default}
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.ProgressBar$ProgressBarStyle: {
-		default-horizontal: {background: progress-bar-horizontal, knobBefore: progress-bar-filled-horizontal},
-		default-vertical:   {background: progress-bar-vertical,   knob: progress-bar-filled-vertical,   knobBefore: progress-bar-filled-vertical}
-	},
-
-	com.badlogic.gdx.scenes.scene2d.ui.Slider$SliderStyle: {
-		default-horizontal: {background: slider-horizontal, knob: rect-knob-vertical, knobOver: rect-knob-vertical-over, knobDown: rect-knob-vertical-down, disabledKnob: rect-knob-vertical-disabled},
-		default-vertical:   {background: slider-vertical,   knob: rect-knob-vertical, knobOver: rect-knob-vertical-over, knobDown: rect-knob-vertical-down, disabledKnob: rect-knob-vertical-disabled}
-	},
-	
 	com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
-		default:   {font: default, fontColor: white},
-		black: 	   {font: default, fontColor: black},
-		highlight: {font: default, fontColor: t-highlight-complementary},
-		
-		default-bold:   {font: default-bold, fontColor: white},
-		black-bold:     {font: default-bold, fontColor: black},
-		
-		big:		   {font: big, fontColor: white},
-		big-black:	   {font: big, fontColor: black},
-		big-highlight: {font: big, fontColor: t-highlight-complementary},
-		
-		small: {font: small, fontColor: white},
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.TextField$TextFieldStyle: {
-		default: {background: background-padded, selection: text-selection, cursor: cursor, font: default, fontColor: white, disabledFontColor: disabled, messageFont: default, messageFontColor: disabled}
-	},
-
-	com.badlogic.gdx.scenes.scene2d.ui.CheckBox$CheckBoxStyle: {
-		default: {checkboxOn: check-box-on, checkboxOver: check-box-over, checkboxOff: check-box-off, font: default, fontColor: white, disabledFontColor: disabled}
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.Touchpad$TouchpadStyle: {
-		default: {background: background, knob: round-knob}
-	},
-	
-	com.badlogic.gdx.scenes.scene2d.ui.Tree$TreeStyle: {
-		default: {minus: tree-minus, plus: tree-plus, selection: tree-selection, over: tree-over}
+		default:      {font: default, fontColor: white},
+		default-bold: {font: default-bold, fontColor: white},
+		big:		  {font: big, fontColor: white}
 	}
 }
