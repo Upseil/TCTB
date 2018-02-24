@@ -26,7 +26,7 @@
 		
 		t-disabled: t-medium-light,
 		
-		t-screen-background: t-medium,
+		t-screen-background: {r: 0.30, g: 0.30, b: 0.30, a: 1},
 		
 		t-color0: {r: 0.105, g: 0.631, b: 0.886, a: 1},
 		t-color1: {r: 0.855, g: 0.243, b: 0.243, a: 1},
@@ -45,9 +45,9 @@
 		scroll-knob-vertical:	{name: t-vknob, color: t-highlight-dark},
 		scroll-knob-horizontal: {name: t-hknob, color: t-highlight-dark},
 		
-		color0 : {name: t-dot, color: t-color0},
-		color1 : {name: t-dot, color: t-color1},
-		color2 : {name: t-dot, color: t-color2}
+		background-t-color0 : {name: t-dot, color: t-color0},
+		background-t-color1 : {name: t-dot, color: t-color1},
+		background-t-color2 : {name: t-dot, color: t-color2}
 	}
 	
 	com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {

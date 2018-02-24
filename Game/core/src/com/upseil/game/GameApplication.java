@@ -19,12 +19,15 @@ import com.upseil.gdx.artemis.system.ClearScreenSystem;
 import com.upseil.gdx.artemis.system.LayeredInputSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.math.ExtendedRandom;
+import com.upseil.gdx.math.ExtendedRandomXS128;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.BorderBuilder;
 import com.upseil.gdx.scene2d.util.DividerBuilder;
 
 public class GameApplication extends ArtemisApplicationAdapter {
-    
+
+    public static final ExtendedRandom Random = new ExtendedRandomXS128();
     public static HUDStage HUD;
     
     private final SerializationContext serializationContext;

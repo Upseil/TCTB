@@ -1,8 +1,9 @@
 {
     "grid": {
         "gridSize": 15,
-        "gridPadding": 10,
+        "exclusionAreaSize": 0.4,
         
+        "gridPadding": 10,
         "cellSize": 50,
         "spacing": 10
     },

@@ -62,6 +62,10 @@ public class GameConfig extends AbstractConfig {
             return getInt("gridSize");
         }
         
+        public float getExclusionAreaSize() {
+            return getFloat("exclusionAreaSize");
+        }
+        
         public int getGridPadding() {
             return getInt("gridPadding");
         }

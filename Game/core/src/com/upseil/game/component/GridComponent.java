@@ -7,11 +7,11 @@ public class GridComponent extends Component {
     
     private Grid grid;
 
-    public Grid getGrid() {
+    public Grid get() {
         return grid;
     }
 
-    public GridComponent setGrid(Grid grid) {
+    public GridComponent set(Grid grid) {
         this.grid = grid;
         return this;
     }

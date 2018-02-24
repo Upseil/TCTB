@@ -28,7 +28,7 @@ public class GameInitializer extends BaseSystem {
     @Override
     protected void initialize() {
         GameState gameState = new GameState();
-        gameState.setScore(150);
+        gameState.setScore(0);
         
         Entity gameStateEntity = world.createEntity();
         gameStateEntity.edit().add(gameState);
@@ -49,7 +49,7 @@ public class GameInitializer extends BaseSystem {
     private void initializeGrid() {
         int gridSize = config.getGridConfig().getGridSize();
         Entity gridEntity = world.createEntity();
-        gridEntity.edit().add(new GridComponent().setGrid(new Grid(gridSize, gridSize)));
+        gridEntity.edit().add(new GridComponent().set(new Grid(gridSize, gridSize, config.getGridConfig().getExclusionAreaSize())));
         tagManager.register(Tag.Grid, gridEntity);
     }
 

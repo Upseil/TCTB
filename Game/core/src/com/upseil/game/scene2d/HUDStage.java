@@ -11,11 +11,15 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.upseil.game.Tag;
 import com.upseil.game.GameConfig;
 import com.upseil.game.GameConfig.HUDConfig;
+import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
+import com.upseil.game.component.GridComponent;
+import com.upseil.game.domain.Color;
+import com.upseil.game.domain.Grid;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
 import com.upseil.gdx.scene2d.util.ValueLabelBuilder;
 
@@ -27,6 +31,7 @@ public class HUDStage extends Stage {
     
     private TagManager<Tag> tagManager;
     private ComponentMapper<GameState> gameStateMapper;
+    private ComponentMapper<GridComponent> gridMapper;
     
     @Wire(name="Skin") private Skin skin;
     @Wire(name="UI") private I18NBundle hudMessages;
@@ -35,6 +40,7 @@ public class HUDStage extends Stage {
     private final Table container;
     
     private GameState gameState;
+    private Grid grid;
     
     public HUDStage(Batch batch, World world) {
         super(new ScreenViewport(), batch);
@@ -57,13 +63,16 @@ public class HUDStage extends Stage {
         container.add();
 
         container.row();
-        container.add(new Image(skin, "color0")).size(buttonSize, buttonLength).space(ButtonSpacing).expandX().right();
+        container.add(new Image(BackgroundBuilder.byColor(skin, Color.Color1.getName())))
+                 .size(buttonSize, buttonLength).space(ButtonSpacing).expandX().right();
         container.add();
-        container.add(new Image(skin, "color2")).size(buttonSize, buttonLength).space(ButtonSpacing).expandX().left();
+        container.add(new Image(BackgroundBuilder.byColor(skin, Color.Color3.getName())))
+                 .size(buttonSize, buttonLength).space(ButtonSpacing).expandX().left();
         
         container.row();
         container.add();
-        container.add(new Image(skin, "color1")).size(buttonLength, buttonSize).expandY().top();
+        container.add(new Image(BackgroundBuilder.byColor(skin, Color.Color2.getName())))
+                 .size(buttonLength, buttonSize).expandY().top();
         container.add();
         
         addActor(container);
@@ -74,7 +83,7 @@ public class HUDStage extends Stage {
         Table header = new Table(skin);
         header.add(hudMessages.get("score") + ":", "big").expandX().right().padRight(spacing);
         header.add(ValueLabelBuilder.newLabel(skin, "big").withInterval(config.getUpdateInterval())
-                                                          .withValue(() -> Integer.toString(gameState.getScore()))
+                                                          .withValue(() -> text().append(gameState.getScore()).toString())
                                     .build())
               .expandX().left();
         return header;
@@ -85,18 +94,16 @@ public class HUDStage extends Stage {
         float counterSize = config.getCounterSize();
         Table cellCounters = new Table(skin);
         
-        // TODO Use colored value labels
-        cellCounters.add(text("t-color0").append("123"), "default-bold").expandX().right();
-        cellCounters.add(text("t-color0").append("x"), "default-bold").padLeft(spacing).padRight(spacing);
-        cellCounters.add(new Image(skin, "color0")).size(counterSize).expandX().left();
-
-        cellCounters.add(text("t-color1").append("456"), "default-bold").expandX().right();
-        cellCounters.add(text("t-color1").append("x"), "default-bold").padLeft(spacing).padRight(spacing);
-        cellCounters.add(new Image(skin, "color1")).size(counterSize).expandX().left();
-
-        cellCounters.add(text("t-color2").append("789"), "default-bold").expandX().right();
-        cellCounters.add(text("t-color2").append("x"), "default-bold").padLeft(spacing).padRight(spacing);
-        cellCounters.add(new Image(skin, "color2")).size(counterSize).expandX().left();
+        for (int number = 0; number < Color.size(); number++) {
+            Color color = Color.forNumber(number);
+            cellCounters.add(ValueLabelBuilder.newLabel(skin, "default-bold")
+                                              .withInterval(config.getUpdateInterval())
+                                              .withValue(() -> text(color.getName()).append(grid.getColorCount(color)).toString())
+                                          .build())
+                        .expandX().right();
+            cellCounters.add(text(color.getName()).append("x"), "default-bold").padLeft(spacing).padRight(spacing);
+            cellCounters.add(new Image(BackgroundBuilder.byColor(skin, color.getName()))).size(counterSize).expandX().left();
+        }
         
         return cellCounters;
     }
@@ -113,6 +120,7 @@ public class HUDStage extends Stage {
     @Override
     public void act(float delta) {
         gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
+        grid = gridMapper.get(tagManager.getEntityId(Tag.Grid)).get();
         super.act(delta);
     }
     
