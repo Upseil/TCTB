@@ -6,31 +6,42 @@
 		big: {file: vis-open-sans-28.fnt}
 	},
 	com.badlogic.gdx.graphics.Color: {
-		a0:   {r: 0, g: 0, b: 0, a: 0.00},
-		a128: {r: 0, g: 0, b: 0, a: 0.50},
+		a0:   {hex: #00000000},
+		a128: {hex: #00000080},
 	
-		t-white:        {r: 1.00, g: 1.00, b: 1.00, a: 1},
-		t-light:        {r: 0.70, g: 0.70, b: 0.70, a: 1},
-		t-medium-light: {r: 0.40, g: 0.40, b: 0.40, a: 1},
-		t-medium:       {r: 0.20, g: 0.20, b: 0.20, a: 1},
-		t-medium-dark:  {r: 0.15, g: 0.15, b: 0.15, a: 1},
-		t-dark:         {r: 0.10, g: 0.10, b: 0.10, a: 1},
-		t-black:        {r: 0.00, g: 0.00, b: 0.00, a: 1},
+		t-white:        {hex: #FFFFFF},
+		t-light:        {hex: #B2B2B2},
+		t-medium-light: {hex: #666666},
+		t-medium:       {hex: #333333},
+		t-medium-dark:  {hex: #262626},
+		t-dark:         {hex: #191919},
+		t-black:        {hex: #000000},
 		
-		t-highlight:        {r: 0.105, g: 0.631, b: 0.886, a: 1},
-		t-highlight-medium: {r: 0.075, g: 0.473, b: 0.664, a: 1},
-		t-highlight-dark:   {r: 0.052, g: 0.316, b: 0.443, a: 1},
+		t-highlight:        {hex: #1BA1E2},
+		t-highlight-medium: {hex: #1378A9},
+		t-highlight-dark:   {hex: #0D5071},
 		
-		t-highlight-complementary:        {r: 0.850, g: 0.500, b: 0.050, a: 1},
-		t-highlight-complementary-medium: {r: 0.895, g: 0.369, b: 0.114, a: 1},
+		t-highlight-complementary:        {hex: #D9800D},
+		t-highlight-complementary-medium: {hex: #E45E1D},
 		
 		t-disabled: t-medium-light,
 		
-		t-screen-background: {r: 0.30, g: 0.30, b: 0.30, a: 1},
+		t-screen-background: {hex: #4C4C4C},
 		
-		t-color0: {r: 0.105, g: 0.631, b: 0.886, a: 1},
-		t-color1: {r: 0.855, g: 0.243, b: 0.243, a: 1},
-		t-color2: {r: 0.380, g: 0.930, b: 0.380, a: 1},
+		t-color0:			{hex: #1BA1E2},
+		t-color0-medium:	{hex: #4095BF},
+		t-color0-emphasize: {hex: #19B2FF},
+		t-color0-highlight: {hex: #66CCFF},
+		
+		t-color1: 			{hex: #DA3E3E},
+		t-color1-medium:	{hex: #C05959},
+		t-color1-emphasize: {hex: #F04C4C},
+		t-color1-highlight: {hex: #F98686},
+		
+		t-color2: 			{hex: #61ED61},
+		t-color2-medium:	{hex: #64B464},
+		t-color2-emphasize: {hex: #66FF66},
+		t-color2-highlight: {hex: #B3FFB3},
 		
 		black: t-black,
 		white: t-white
@@ -42,6 +53,21 @@
 		button-over-medium:	   {name: t-base, color: t-medium},
 		button-over-highlight: {name: t-base, color: t-highlight-medium},
 		
+		button0-up:			{name: t-base, color: t-color0},
+		button0-over:		{name: t-base, color: t-color0-emphasize},
+		button0-down:		{name: t-base, color: t-color0-highlight},
+		button0-disabled:	{name: t-base, color: t-color0-medium},
+		
+		button1-up:			{name: t-base, color: t-color1},
+		button1-over:		{name: t-base, color: t-color1-emphasize},
+		button1-down:		{name: t-base, color: t-color1-highlight},
+		button1-disabled:	{name: t-base, color: t-color1-medium},
+		
+		button2-up:			{name: t-base, color: t-color2},
+		button2-over:		{name: t-base, color: t-color2-emphasize},
+		button2-down:		{name: t-base, color: t-color2-highlight},
+		button2-disabled:	{name: t-base, color: t-color2-medium},
+		
 		scroll-knob-vertical:	{name: t-vknob, color: t-highlight-dark},
 		scroll-knob-horizontal: {name: t-hknob, color: t-highlight-dark},
 		
@@ -51,7 +77,11 @@
 	}
 	
 	com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
-		default: {down: button-down, up: button, over: button-over}
+		default: {down: button-down, up: button, over: button-over},
+		
+		button0: {up: button0-up, over: button0-over, down: button0-down, disabled: button0-disabled},
+		button1: {up: button1-up, over: button1-over, down: button1-down, disabled: button1-disabled},
+		button2: {up: button2-up, over: button2-over, down: button2-down, disabled: button2-disabled}
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		default: {up: button, down: button-down, over: button-over, disabled: button, font: default, fontColor: white, disabledFontColor: t-disabled},

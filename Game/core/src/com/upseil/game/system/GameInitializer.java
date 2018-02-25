@@ -25,6 +25,8 @@ public class GameInitializer extends BaseSystem {
     
     @Wire(name="Config") private GameConfig config;
     
+    private boolean isProcessed;
+    
     @Override
     protected void initialize() {
         GameState gameState = new GameState();
@@ -34,16 +36,7 @@ public class GameInitializer extends BaseSystem {
         gameStateEntity.edit().add(gameState);
         tagManager.register(Tag.GameState, gameStateEntity);
         
-        initializeHUD();
         initializeGrid();
-    }
-
-    private void initializeHUD() {
-        GameApplication.HUD = new HUDStage(renderSystem.getGlobalBatch(), world);
-        EntityEdit hud = world.createEntity().edit();
-        hud.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
-        hud.create(Scene.class).initialize(GameApplication.HUD);
-        hud.create(InputHandler.class).setProcessor(GameApplication.HUD);
     }
 
     private void initializeGrid() {
@@ -55,10 +48,21 @@ public class GameInitializer extends BaseSystem {
 
     @Override
     protected boolean checkProcessing() {
-        return false;
+        return !isProcessed;
     }
 
     @Override
-    protected void processSystem() { }
+    protected void processSystem() {
+        initializeHUD();
+        isProcessed = true;
+    }
+
+    private void initializeHUD() {
+        GameApplication.HUD = new HUDStage(renderSystem.getGlobalBatch(), world);
+        EntityEdit hud = world.createEntity().edit();
+        hud.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
+        hud.create(Scene.class).initialize(GameApplication.HUD);
+        hud.create(InputHandler.class).setProcessor(GameApplication.HUD);
+    }
     
 }

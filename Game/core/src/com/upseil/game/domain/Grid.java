@@ -6,11 +6,9 @@ import com.upseil.gdx.math.ExtendedRandom;
 public class Grid {
     
     private final Cell[][] cells;
-    private final int[] colorCounts;
-
+    
     public Grid(int width, int height, float exclusionAreaSize) {
         cells = new Cell[width][height];
-        colorCounts = new int[Color.size()];
         
         initializeBlackAndWhite(exclusionAreaSize);
         fillGrid();
@@ -25,7 +23,6 @@ public class Grid {
                 if (cells[x][y] == null) {
                     Color color = getRandomCellColor();
                     cells[x][y] = new Cell(x, y, color);
-                    colorCounts[color.getNumber()] = colorCounts[color.getNumber()] + 1;
                 }
             }
         }
@@ -56,13 +53,9 @@ public class Grid {
 
     private Color getRandomCellColor() {
         float value = GameApplication.Random.randomFloat();
-        if (value < 0.333333f) return Color.Color1;
-        if (value < 0.666666f) return Color.Color2;
-        return Color.Color3;
-    }
-    
-    public int getColorCount(Color color) {
-        return colorCounts[color.getNumber()];
+        if (value < 0.333333f) return Color.Color0;
+        if (value < 0.666666f) return Color.Color1;
+        return Color.Color2;
     }
     
     public Cell getCell(int x, int y) {
