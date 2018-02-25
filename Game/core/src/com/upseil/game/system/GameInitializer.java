@@ -9,8 +9,6 @@ import com.upseil.game.GameConfig;
 import com.upseil.game.Layers;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
-import com.upseil.game.component.GridComponent;
-import com.upseil.game.domain.Grid;
 import com.upseil.game.scene2d.HUDStage;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
@@ -35,15 +33,6 @@ public class GameInitializer extends BaseSystem {
         Entity gameStateEntity = world.createEntity();
         gameStateEntity.edit().add(gameState);
         tagManager.register(Tag.GameState, gameStateEntity);
-        
-        initializeGrid();
-    }
-
-    private void initializeGrid() {
-        int gridSize = config.getGridConfig().getGridSize();
-        Entity gridEntity = world.createEntity();
-        gridEntity.edit().add(new GridComponent().set(new Grid(gridSize, gridSize, config.getGridConfig().getExclusionAreaSize())));
-        tagManager.register(Tag.Grid, gridEntity);
     }
 
     @Override
