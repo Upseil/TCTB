@@ -21,6 +21,7 @@ import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
 import com.upseil.gdx.scene2d.util.ValueLabelBuilder;
 
@@ -134,7 +135,7 @@ public class HUDStage extends Stage {
                                               .withValue(() -> text(getTextColor(number)).append("x").toString())
                                           .build())
                         .padLeft(spacing).padRight(spacing);
-            cellCounters.add(new Image(gridController.getSyncedDrawable(number))).size(counterSize).expandX().left();
+            cellCounters.add(new Image(BackgroundBuilder.byColor(skin, Color.forNumber(number).getName()))).size(counterSize).expandX().left();
         }
         
         return cellCounters;

@@ -61,6 +61,10 @@ public class Grid {
     public Cell getCell(int x, int y) {
         return cells[x][y];
     }
+
+    public void removeCell(int x, int y) {
+        getCell(x, y).setColor(Color.Empty);
+    }
     
     public int getWidth() {
         return cells.length;

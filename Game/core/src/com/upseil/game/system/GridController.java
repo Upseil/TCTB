@@ -1,18 +1,28 @@
 package com.upseil.game.system;
 
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeOut;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveBy;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.removeActor;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
+
 import com.artemis.BaseSystem;
 import com.artemis.ComponentMapper;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.IntMap;
+import com.badlogic.gdx.utils.ObjectFloatMap;
+import com.badlogic.gdx.utils.ObjectFloatMap.Entries;
+import com.badlogic.gdx.utils.ObjectFloatMap.Entry;
+import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.Scaling;
 import com.upseil.game.GameApplication;
 import com.upseil.game.GameConfig;
@@ -24,11 +34,13 @@ import com.upseil.game.component.GridComponent;
 import com.upseil.game.domain.Cell;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Grid;
+import com.upseil.game.scene2d.CellActor;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
 import com.upseil.gdx.artemis.component.Scene;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.util.RequiresResize;
 import com.upseil.gdx.viewport.PaddedScreen;
@@ -37,22 +49,31 @@ import com.upseil.gdx.viewport.PartialViewport;
 
 public class GridController extends BaseSystem implements RequiresResize {
     
+    private static final float MaxRemoveDelay = 0.5f;
+    private static final float RemoveDuration = 1.0f;
+    private static final float RemoveDistance = 150f;
+    
     private TagManager<Tag> tagManager;
     private ComponentMapper<GameState> gameStateMapper;
     private ComponentMapper<GridComponent> gridMapper;
 
     @Wire(name="Skin") private Skin skin;
-    private SpriteDrawable[] coloredCellDrawables;
     private GridConfig config;
     
     private PaddedScreen screenDivider;
     private Stage stage;
+    private float paddedCellSize;
+    private float offset;
     
+    private GameState gameState;
     private Grid grid;
-    private IntMap<Array<Image>> cellsByColor;
     
     private boolean updateScreenSize;
     private boolean initializeGrid;
+    
+    private IntMap<ObjectSet<CellActor>> cellsByColor;
+    private ObjectFloatMap<CellActor> cellRemovalDelays;
+    private Color colorToRemove;
     
     @Override
     protected void initialize() {
@@ -66,18 +87,16 @@ public class GridController extends BaseSystem implements RequiresResize {
         
         EntityEdit gridEdit = tagManager.getEntity(Tag.Grid).edit();
         gridEdit.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
-        gridEdit.create(Scene.class).initialize(stage);
         gridEdit.create(InputHandler.class).setProcessor(stage);
+        Scene gridScene = gridEdit.create(Scene.class);
+        gridScene.initialize(stage);//.setTimeScale(0.1f);
 
         int expectedColorCount = getExpectedColorCount();
-        coloredCellDrawables = new SpriteDrawable[Color.size()];
         cellsByColor = new IntMap<>();
         for (int number = 0; number < Color.size(); number++) {
-            Sprite sprite = createSpriteForColor(number);
-            coloredCellDrawables[number] = new SpriteDrawable(sprite);
-            
-            cellsByColor.put(number, new Array<>(expectedColorCount));
+            cellsByColor.put(number, new ObjectSet<>(expectedColorCount));
         }
+        cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
         
         initializeGrid = true;
     }
@@ -97,15 +116,15 @@ public class GridController extends BaseSystem implements RequiresResize {
     }
     
     @Override
+    protected void begin() {
+        gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
+        grid = gridMapper.get(tagManager.getEntityId(Tag.Grid)).get();
+    }
+    
+    @Override
     protected void processSystem() {
         if (updateScreenSize) { // FIXME This doesn't work when resizing
-            int padding = config.getGridPadding();
-            int top = Math.round(GameApplication.HUD.getTopHeight()) + padding;
-            int left = Math.round(GameApplication.HUD.getLeftWidth()) + padding;
-            int bottom = Math.round(GameApplication.HUD.getBottomHeight()) + padding;
-            int right = Math.round(GameApplication.HUD.getRightWidth()) + padding;
-            
-            screenDivider.pad(top, left, bottom, right);
+            updateScreenSize();
             updateScreenSize = false;
         }
         
@@ -115,42 +134,92 @@ public class GridController extends BaseSystem implements RequiresResize {
                 cellsByColor.get(number).clear();
             }
             
-            grid = gridMapper.get(tagManager.getEntityId(Tag.Grid)).get();
-            float cellSize = config.getCellSize();
-            float paddedCellSize = cellSize + config.getSpacing();
-            float offset = config.getSpacing() / 2;
-
-            for (int x = 0; x < grid.getWidth(); x++) {
-                for (int y = 0; y < grid.getHeight(); y++) {
-                    Cell cell = grid.getCell(x, y);
-                    Color cellColor = cell.getColor();
-                    
-                    Image cellImage = new Image(getDrawable(cellColor));
-                    cellImage.setBounds(x * paddedCellSize + offset, y * paddedCellSize + offset, cellSize, cellSize);
-                    stage.addActor(cellImage);
-                    
-                    int colorNumber = cellColor.getNumber();
-                    if (colorNumber >= 0) {
-                        cellsByColor.get(colorNumber).add(cellImage);
-                    }
-                }
-            }
-            
+            initializeGrid();
             initializeGrid = false;
         }
-    }
-    
-    public Drawable getSyncedDrawable(int colorNumber) {
-        if (colorNumber < 0 || colorNumber >= Color.size()) {
-            throw new IndexOutOfBoundsException("Number must be between 0 and " + Color.size());
+        
+        if (cellRemovalDelays.size > 0) {
+            Entries<CellActor> cells = cellRemovalDelays.entries();
+            while (cells.hasNext()) {
+                Entry<CellActor> entry = cells.next();
+                if (entry.value <= world.delta) {
+                    removeCell(entry.key);
+                    cells.remove();
+                } else {
+                    cellRemovalDelays.put(entry.key, entry.value - world.delta);
+                }
+            }
         }
-        return coloredCellDrawables[colorNumber];
+        
+        if (colorToRemove != null) {
+            ExtendedRandom random = GameApplication.Random;
+            ObjectSet<CellActor> cells = cellsByColor.get(colorToRemove.getNumber());
+            for (CellActor cell : cells) {
+                float removalDelay = random.randomFloat(0, MaxRemoveDelay);
+                grid.removeCell(toGrid(cell.getX()), toGrid(cell.getY()));
+                cellRemovalDelays.put(cell, removalDelay);
+
+                cell.toFront();
+                cell.addAction(sequence(delay(removalDelay),
+                                        parallel(fadeOut(RemoveDuration, Interpolation.fade),
+                                                 scaleTo(0, 0, RemoveDuration, Interpolation.fade),
+                                                 moveBy(0, RemoveDistance, RemoveDuration, Interpolation.pow2In)),
+                                        removeActor()));
+            }
+            GameApplication.HUD.setContinousUpdate(true);
+            colorToRemove = null;
+        }
+    }
+
+    private void removeCell(CellActor cell) {
+        gameState.incrementScore();
+        
+        ObjectSet<CellActor> cells = cellsByColor.get(cell.getCellColor().getNumber());
+        cells.remove(cell);
+        if (cells.size == 0) {
+            GameApplication.HUD.setUpdateValueLabels(true);
+            GameApplication.HUD.setContinousUpdate(false);
+        }
+    }
+
+    public void updateScreenSize() {
+        int padding = config.getGridPadding();
+        int top = Math.round(GameApplication.HUD.getTopHeight()) + padding;
+        int left = Math.round(GameApplication.HUD.getLeftWidth()) + padding;
+        int bottom = Math.round(GameApplication.HUD.getBottomHeight()) + padding;
+        int right = Math.round(GameApplication.HUD.getRightWidth()) + padding;
+        
+        screenDivider.pad(top, left, bottom, right);
+    }
+
+    public void initializeGrid() {
+        float cellSize = config.getCellSize();
+        paddedCellSize = cellSize + config.getSpacing();
+        offset = config.getSpacing() / 2;
+
+        for (int x = 0; x < grid.getWidth(); x++) {
+            for (int y = 0; y < grid.getHeight(); y++) {
+                Cell cell = grid.getCell(x, y);
+                Color cellColor = cell.getColor();
+                
+                CellActor cellActor = new CellActor(skin, cellColor, cellSize);
+                cellActor.setPosition(toStage(x), toStage(y));
+                stage.addActor(cellActor);
+                
+                int colorNumber = cellColor.getNumber();
+                if (colorNumber >= 0) {
+                    cellsByColor.get(colorNumber).add(cellActor);
+                }
+            }
+        }
     }
     
-    private Drawable getDrawable(Color color) {
-        int number = color.getNumber();
-        if (number >= 0) return coloredCellDrawables[number];
-        return BackgroundBuilder.byColor(skin, color.getName());
+    private float toStage(int grid) {
+        return grid * paddedCellSize + offset;
+    }
+    
+    private int toGrid(float stage) {
+        return (int) (stage / paddedCellSize);
     }
     
     public int getColorCount(int colorNumber) {
@@ -161,36 +230,33 @@ public class GridController extends BaseSystem implements RequiresResize {
         if (color == null) {
             deselectAll();
         } else {
-            coloredCellDrawables[color.getNumber()].getSprite().setColor(skin.getColor(color.getName() + "-emphasize"));
+            getSpriteDrawable(color).getSprite().setColor(skin.getColor(color.getName() + "-emphasize"));
         }
     }
 
     private void deselectAll() {
-        for (int number = 0; number < coloredCellDrawables.length; number++) {
-            coloredCellDrawables[number].getSprite().setColor(skin.getColor(Color.forNumber(number).getName()));
+        for (int number = 0; number < Color.size(); number++) {
+            getSpriteDrawable(Color.forNumber(number)).getSprite().setColor(skin.getColor(Color.forNumber(number).getName()));
         }
     }
 
-    public void remove(Color color) {
-        Array<Image> cells = cellsByColor.get(color.getNumber());
-        for (Image cellImage : cells) {
-            cellImage.remove();
+    private SpriteDrawable getSpriteDrawable(Color color) {
+        String colorName = color.getName();
+        SpriteDrawable spriteDrawable = skin.optional(colorName, SpriteDrawable.class);
+        if (spriteDrawable == null) {
+            spriteDrawable = (SpriteDrawable) BackgroundBuilder.byColor(skin, colorName);
+            skin.add(colorName, spriteDrawable, SpriteDrawable.class);
         }
-        
-        gameStateMapper.get(tagManager.getEntityId(Tag.GameState)).incrementScore(cells.size);
-        cells.clear();
+        return spriteDrawable;
+    }
+
+    public void remove(Color color) {
+        colorToRemove = color;
     }
 
     @Override
     public void resize(int width, int height) {
         updateScreenSize = true;
-    }
-    
-    @Override
-    protected void dispose() {
-        for (SpriteDrawable drawable : coloredCellDrawables) {
-            drawable.getSprite().getTexture().dispose();
-        }
     }
     
 }

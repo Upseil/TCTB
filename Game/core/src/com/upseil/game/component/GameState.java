@@ -9,6 +9,10 @@ public class GameState extends Component {
     public int getScore() {
         return score;
     }
+
+    public void incrementScore() {
+        incrementScore(1);
+    }
     
     public void incrementScore(int amount) {
         score += amount;
