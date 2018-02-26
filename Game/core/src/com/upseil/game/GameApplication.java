@@ -16,6 +16,7 @@ import com.upseil.game.system.SaveSystem;
 import com.upseil.gdx.artemis.ArtemisApplicationAdapter;
 import com.upseil.gdx.artemis.system.AllSubscriptionMisplacementWorkaround;
 import com.upseil.gdx.artemis.system.ClearScreenSystem;
+import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredInputSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
@@ -61,15 +62,16 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 .with(new TagManager<Tag>())
                 .with(new EntityFactory())
                 .with(new GameInitializer())
+                
                 .with(new LoadSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
-                
                 .with(new GridController())
-                
                 .with(new SaveSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
                 
                 .with(new LayeredInputSystem())
-                .with(new ClearScreenSystem(skin.getColor("t-screen-background")))
+                .with(new ClearScreenSystem())
                 .with(new LayeredSceneRenderSystem<>(new SpriteBatch()))
+
+                .with(new EventSystem())
                 
                 .build();
 

@@ -1,5 +1,7 @@
 package com.upseil.game.scene2d;
 
+import static com.upseil.gdx.scene2d.util.Values.floatValue;
+
 import com.artemis.ComponentMapper;
 import com.artemis.World;
 import com.artemis.annotations.Wire;
@@ -13,7 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.GameConfig;
 import com.upseil.game.GameConfig.HUDConfig;
 import com.upseil.game.Tag;
@@ -42,20 +44,20 @@ public class HUDStage extends Stage {
     
     private final Table container;
     private final Button[] buttons;
+    private float buttonRatio;
     
     private GameState gameState;
     
     private boolean updateValueLabels;
     private boolean continousUpdate;
     
-    public HUDStage(Batch batch, World world) {
-        super(new ScreenViewport(), batch);
+    public HUDStage(Viewport viewport, Batch batch, World world) {
+        super(viewport, batch);
         world.inject(this);
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getHUDConfig();
-        float buttonSize = config.getButtonSize();
-        float buttonLength = config.getButtonLength();
+        buttonRatio = config.getButtonRatio();
         
         container = new Table(skin);
         container.setFillParent(true);
@@ -83,18 +85,29 @@ public class HUDStage extends Stage {
         container.add();
 
         container.row();
-        container.add(button0).size(buttonSize, buttonLength).space(ButtonSpacing).expandX().right();
+        container.add(button0).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).right();
         container.add();
-        container.add(button2).size(buttonSize, buttonLength).space(ButtonSpacing).expandX().left();
+        container.add(button2).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).left();
         
         container.row();
         container.add();
-        container.add(button1).size(buttonLength, buttonSize).expandY().top();
+        container.add(button1).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).space(ButtonSpacing).top();
         container.add();
         
+        Image background = new Image(BackgroundBuilder.byColor(skin, "t-screen-background"));
+        background.setFillParent(true);
+        addActor(background);
         addActor(container);
-        
         updateValueLabels = true;
+    }
+    
+    // FIXME Somehow this breaks when the screen height is much bigger than the screen width
+    private float calculateButtonLength() {
+        return getWidth() / (1 + 2 * buttonRatio) - container.getPadLeft() - container.getPadRight() - 2 * ButtonSpacing;
+    }
+    
+    private float calculateButtonSize() {
+        return calculateButtonLength() * buttonRatio;
     }
     
     private Actor createHeader() {
@@ -189,22 +202,22 @@ public class HUDStage extends Stage {
     
     public float getLeftWidth() {
         container.validate();
-        return container.getColumnWidth(0) + config.getPadding();
+        return container.getColumnWidth(0) + container.getPadLeft();
     }
     
     public float getRightWidth() {
         container.validate();
-        return container.getColumnWidth(container.getColumns() - 1) + config.getPadding();
+        return container.getColumnWidth(container.getColumns() - 1) + container.getPadRight();
     }
     
     public float getTopHeight() {
         container.validate();
-        return container.getRowHeight(0) + container.getRowHeight(1) + config.getPadding();
+        return container.getRowHeight(0) + container.getRowHeight(1) + container.getPadTop();
     }
     
     public float getBottomHeight() {
         container.validate();
-        return container.getRowHeight(container.getRows() - 1) + config.getPadding();
+        return container.getRowHeight(container.getRows() - 1) + container.getPadBottom();
     }
     
 }

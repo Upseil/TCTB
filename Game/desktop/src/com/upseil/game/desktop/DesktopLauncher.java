@@ -14,7 +14,7 @@ public class DesktopLauncher {
         configuration.title = "Three Colors - Three Buttons";
         configuration.width = 800;
         configuration.height = 800;
-        configuration.resizable = false;
+//        configuration.resizable = false;
         
         DesktopCompressingMapper<Savegame> savegameMapper = new DesktopCompressingMapper<>(Savegame.class);
         savegameMapper.setCompressing(true);

@@ -1,7 +1,7 @@
 package com.upseil.game.domain;
 
 public enum Color {
-    Empty(null, -3), Black("black", -2), White("white", -1),
+    Empty(null, -3), Black("t-black", -2), White("t-white", -1),
     Color0("t-color0", 0), Color1("t-color1", 1), Color2("t-color2", 2);
     
     private final String name;

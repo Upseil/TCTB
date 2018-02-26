@@ -94,12 +94,8 @@ public class GameConfig extends AbstractConfig {
             return getFloat("updateInterval");
         }
         
-        public float getButtonSize() {
-            return getFloat("buttonSize");
-        }
-        
-        public float getButtonLength() {
-            return getFloat("buttonLength");
+        public float getButtonRatio() {
+            return getFloat("buttonRatio");
         }
         
         public float getCounterSize() {

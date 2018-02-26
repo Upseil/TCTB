@@ -2,7 +2,7 @@ package com.upseil.game;
 
 public enum Layers {
     
-    Background(-1), World(0), HUD(1), UI(2);
+    Background(-1), HUD(0), World(1), UI(2);
     
     private final int zIndex;
 

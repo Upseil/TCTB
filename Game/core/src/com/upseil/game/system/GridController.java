@@ -14,6 +14,7 @@ import com.artemis.ComponentMapper;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
@@ -38,18 +39,20 @@ import com.upseil.game.scene2d.CellActor;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
 import com.upseil.gdx.artemis.component.Scene;
+import com.upseil.gdx.artemis.event.ResizeEvent;
+import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.util.Pair;
-import com.upseil.gdx.util.RequiresResize;
 import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
-import com.upseil.gdx.viewport.PartialViewport;
+import com.upseil.gdx.viewport.PartialWorldViewport;
 
-public class GridController extends BaseSystem implements RequiresResize {
+public class GridController extends BaseSystem {
     
+    // TODO Config
     private static final float MaxRemoveDelay = 0.5f;
     private static final float RemoveDuration = 1.0f;
     private static final float RemoveDistance = 150f;
@@ -61,7 +64,7 @@ public class GridController extends BaseSystem implements RequiresResize {
     @Wire(name="Skin") private Skin skin;
     private GridConfig config;
     
-    private PaddedScreen screenDivider;
+    private PaddedScreen screenPadding;
     private Stage stage;
     private float paddedCellSize;
     private float offset;
@@ -79,17 +82,19 @@ public class GridController extends BaseSystem implements RequiresResize {
     
     @Override
     protected void initialize() {
+        world.getSystem(EventSystem.class).registerHandler(ResizeEvent.Type, e -> updateScreenSize = true);
+        
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getGridConfig();
         float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
         
-        screenDivider = new PaddedScreen();
-        PartialViewport gridViewport = new PartialScalingViewport(screenDivider, Scaling.fit, worldSize, worldSize);
+        screenPadding = new PaddedScreen();
+        PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
         stage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
         
         Entity gridEntity = world.createEntity();
         EntityEdit gridEdit = gridEntity.edit();
-        gridEdit.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
+        gridEdit.create(Layer.class).setZIndex(Layers.World.getZIndex());
         gridEdit.create(InputHandler.class).setProcessor(stage);
         Scene gridScene = gridEdit.create(Scene.class);
         gridScene.initialize(stage);//.setTimeScale(0.1f);
@@ -128,7 +133,7 @@ public class GridController extends BaseSystem implements RequiresResize {
     
     @Override
     protected void processSystem() {
-        if (updateScreenSize) { // FIXME This doesn't work when resizing
+        if (updateScreenSize) {
             updateScreenSize();
             updateScreenSize = false;
         }
@@ -178,8 +183,7 @@ public class GridController extends BaseSystem implements RequiresResize {
     private void fillGaps(Color colorRemoved) {
         int x = colorRemoved == Color.Color2 ? getGridWidth() - 1 : 0;
         int y = 0;
-        int newX = -1;
-        int newY = -1;
+        int newX = -1;        int newY = -1;
         boolean done = false;
         
         while (!done) {
@@ -237,6 +241,8 @@ public class GridController extends BaseSystem implements RequiresResize {
                 newX = -1;
                 newY = -1;
 
+                // TODO Create new cells
+                
                 float delay = 0;
                 Pair<CellActor, MoveToAction>[] movements = actorMovements.items;
                 for (int index = actorMovements.size - 1; index >= 0; index--) {
@@ -253,6 +259,8 @@ public class GridController extends BaseSystem implements RequiresResize {
                     actor.addAction(delay(delay, moveAction));
                 }
                 actorMovements.clear();
+                
+                // TODO Re-enable buttons after all movement is done
             }
         }
     }
@@ -285,7 +293,8 @@ public class GridController extends BaseSystem implements RequiresResize {
         int bottom = Math.round(GameApplication.HUD.getBottomHeight()) + padding;
         int right = Math.round(GameApplication.HUD.getRightWidth()) + padding;
         
-        screenDivider.pad(top, left, bottom, right);
+        screenPadding.pad(top, left, bottom, right);
+        stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
     }
 
     public void initializeGrid() {
@@ -391,11 +400,6 @@ public class GridController extends BaseSystem implements RequiresResize {
     
     public int getGridHeight() {
         return cells[0].length;
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        updateScreenSize = true;
     }
     
 }

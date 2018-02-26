@@ -10,8 +10,7 @@
     "HUD": {
         "padding": 10,
         "updateInterval": 0.1,
-        "buttonSize": 50,
-        "buttonLength": 600,
+        "buttonRatio": 0.1,
         "counterSize": 30
     },
 	

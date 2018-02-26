@@ -4,6 +4,7 @@ import com.artemis.BaseSystem;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.GameApplication;
 import com.upseil.game.GameConfig;
 import com.upseil.game.Layers;
@@ -15,6 +16,9 @@ import com.upseil.gdx.artemis.component.Layer;
 import com.upseil.gdx.artemis.component.Scene;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.viewport.PartialScreenViewport;
+import com.upseil.gdx.viewport.ScreenDivider;
+import com.upseil.gdx.viewport.ScreenRatioDivider;
 
 public class GameInitializer extends BaseSystem {
     
@@ -47,7 +51,9 @@ public class GameInitializer extends BaseSystem {
     }
 
     private void initializeHUD() {
-        GameApplication.HUD = new HUDStage(renderSystem.getGlobalBatch(), world);
+        ScreenDivider hudDivider = new ScreenRatioDivider("1:1");
+        Viewport hudViewport = new PartialScreenViewport(hudDivider);
+        GameApplication.HUD = new HUDStage(hudViewport, renderSystem.getGlobalBatch(), world);
         EntityEdit hud = world.createEntity().edit();
         hud.create(Layer.class).setZIndex(Layers.HUD.getZIndex());
         hud.create(Scene.class).initialize(GameApplication.HUD);
