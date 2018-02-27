@@ -20,6 +20,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -47,12 +48,14 @@ import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
+import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.util.Pair;
 import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
 import com.upseil.gdx.viewport.PartialWorldViewport;
 
+// TODO Pool CellActors
 public class GridController extends BaseSystem {
     
     private TagManager<Tag> tagManager;
@@ -73,6 +76,11 @@ public class GridController extends BaseSystem {
     
     private boolean updateScreenSize;
     private boolean initializeGrid;
+
+    private Actor topBorder;
+    private Actor leftBorder;
+    private Actor bottomBorder;
+    private Actor rightBorder;
     
     private CellActor[][] cells;
     private Array<ObjectSet<CellActor>> cellsByColor;
@@ -157,12 +165,10 @@ public class GridController extends BaseSystem {
         }
         
         if (initializeGrid) {
-            gridScene.clear();
-            for (int number = 0; number < Color.size(); number++) {
-                cellsByColor.get(number).clear();
-            }
-            
+            clearGrid();
             initializeGrid();
+            gridScene.setTimeScale(1);
+            GameApplication.HUD.setButtonsDisabled(false);
             initializeGrid = false;
         }
         
@@ -186,6 +192,21 @@ public class GridController extends BaseSystem {
         }
     }
 
+    public void clearGrid() {
+        gridScene.clear();
+        for (int number = 0; number < Color.size(); number++) {
+            cellsByColor.get(number).clear();
+        }
+        for (int x = 0; x < getGridWidth(); x++) {
+            for (int y = 0; y < getGridHeight(); y++) {
+                cells[x][y] = null;
+            }
+        }
+        cellRemovalDelays.clear();
+        cellMovements.clear();
+        newCells.clear();
+    }
+
     private void checkBlackAndWhiteCells() {
         float deltaX = blackCell.getX(Align.center) - whiteCell.getX(Align.center);
         float deltaY = blackCell.getY(Align.center) - whiteCell.getY(Align.center);
@@ -202,7 +223,9 @@ public class GridController extends BaseSystem {
             // FIXME Doesn't work when the stop movement next to each other
             if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
                 // TODO Proper state flow
-                gridScene.setPaused(true);
+//                gridScene.setPaused(true);
+                initializeGrid = true;
+                gameState.setScore(0);
             }
         }
     }
@@ -346,6 +369,11 @@ public class GridController extends BaseSystem {
                 newY = -1;
             }
         }
+        
+        topBorder.toFront();
+        leftBorder.toFront();
+        bottomBorder.toFront();
+        rightBorder.toFront();
     }
 
     public void removeCells() {
@@ -385,6 +413,7 @@ public class GridController extends BaseSystem {
         paddedCellSize = cellSize + config.getSpacing();
         offset = config.getSpacing() / 2;
 
+        initializeGridFrame();
         initializeBlackAndWhite(config.getExclusionAreaSize(), cellSize);
         for (int x = 0; x < getGridWidth(); x++) {
             for (int y = 0; y < getGridHeight(); y++) {
@@ -395,11 +424,32 @@ public class GridController extends BaseSystem {
         }
     }
 
-    private Color getRandomCellColor() {
-        float value = GameApplication.Random.randomFloat();
-        if (value < 0.333333f) return Color.Color0;
-        if (value < 0.666666f) return Color.Color1;
-        return Color.Color2;
+    private void initializeGridFrame() {
+        // TODO Add configurable grid size independent from the spacing
+        float worldWidth = gridScene.getWidth();
+        float worldHeight = gridScene.getHeight();
+        
+        float[] vertices = new float[] { 0,worldHeight,  0,0,  offset,offset,  offset,worldHeight-offset };
+        leftBorder = new PolygonActor(vertices);
+        leftBorder.setColor(skin.getColor(Color.White.getName()));
+        gridScene.addActor(leftBorder);
+        
+        vertices = new float[] { worldWidth-offset,worldHeight-offset,  worldWidth-offset,offset,  worldWidth,0,  worldWidth,worldHeight };
+        rightBorder = new PolygonActor(vertices);
+        rightBorder.setPosition(worldWidth - offset, 0);
+        rightBorder.setColor(skin.getColor(Color.White.getName()));
+        gridScene.addActor(rightBorder);
+        
+        vertices = new float[] { offset,offset,  0,0,  worldWidth,0,  worldWidth-offset,offset };
+        bottomBorder = new PolygonActor(vertices);
+        bottomBorder.setColor(skin.getColor(Color.Black.getName()));
+        gridScene.addActor(bottomBorder);
+        
+        vertices = new float[] { 0,worldHeight,  offset,worldHeight-offset,  worldWidth-offset,worldHeight-offset,  worldWidth,worldHeight };
+        topBorder = new PolygonActor(vertices);
+        topBorder.setColor(skin.getColor(Color.Black.getName()));
+        topBorder.setPosition(0, worldHeight - offset);
+        gridScene.addActor(topBorder);
     }
 
     private void initializeBlackAndWhite(float exclusionAreaSize, float cellSize) {
@@ -436,6 +486,13 @@ public class GridController extends BaseSystem {
         cell.setPosition(toStage(x), toStage(y));
         gridScene.addActor(cell);
         return cell;
+    }
+
+    private Color getRandomCellColor() {
+        float value = GameApplication.Random.randomFloat();
+        if (value < 0.333333f) return Color.Color0;
+        if (value < 0.666666f) return Color.Color1;
+        return Color.Color2;
     }
 
     public void setCell(int x, int y, CellActor cell) {

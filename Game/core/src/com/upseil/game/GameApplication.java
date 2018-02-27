@@ -4,7 +4,7 @@ import com.artemis.World;
 import com.artemis.WorldConfiguration;
 import com.artemis.WorldConfigurationBuilder;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.scene2d.HUDStage;
@@ -69,7 +69,7 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 
                 .with(new LayeredInputSystem())
                 .with(new ClearScreenSystem())
-                .with(new LayeredSceneRenderSystem<>(new SpriteBatch()))
+                .with(new LayeredSceneRenderSystem<>(new PolygonSpriteBatch()))
 
                 .with(new EventSystem())
                 
