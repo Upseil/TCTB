@@ -66,6 +66,7 @@ public class GridController extends BaseSystem {
     
     private PaddedScreen screenPadding;
     private Scene gridScene;
+    private float borderSize;
     private float cellSize;
     private float paddedCellSize;
     private float offset;
@@ -112,7 +113,7 @@ public class GridController extends BaseSystem {
         slowMoThresholdFactor = config.getSlowMoThresholdFactor();
         minSlowMoTimeScale = config.getMinSlowMoTimeScale();
         
-        float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
+        float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing()) + 2 * config.getBorderSize();
         screenPadding = new PaddedScreen();
         PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
         Stage gridStage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
@@ -409,6 +410,7 @@ public class GridController extends BaseSystem {
     }
 
     public void initializeGrid() {
+        borderSize = config.getBorderSize();
         cellSize = config.getCellSize();
         paddedCellSize = cellSize + config.getSpacing();
         offset = config.getSpacing() / 2;
@@ -425,30 +427,29 @@ public class GridController extends BaseSystem {
     }
 
     private void initializeGridFrame() {
-        // TODO Add configurable grid size independent from the spacing
         float worldWidth = gridScene.getWidth();
         float worldHeight = gridScene.getHeight();
         
-        float[] vertices = new float[] { 0,worldHeight,  0,0,  offset,offset,  offset,worldHeight-offset };
+        float[] vertices = new float[] { 0,worldHeight,  0,0,  borderSize,borderSize,  borderSize,worldHeight-borderSize };
         leftBorder = new PolygonActor(vertices);
         leftBorder.setColor(skin.getColor(Color.White.getName()));
         gridScene.addActor(leftBorder);
         
-        vertices = new float[] { worldWidth-offset,worldHeight-offset,  worldWidth-offset,offset,  worldWidth,0,  worldWidth,worldHeight };
+        vertices = new float[] { worldWidth-borderSize,worldHeight-borderSize,  worldWidth-borderSize,borderSize,  worldWidth,0,  worldWidth,worldHeight };
         rightBorder = new PolygonActor(vertices);
-        rightBorder.setPosition(worldWidth - offset, 0);
+        rightBorder.setPosition(worldWidth - borderSize, 0);
         rightBorder.setColor(skin.getColor(Color.White.getName()));
         gridScene.addActor(rightBorder);
         
-        vertices = new float[] { offset,offset,  0,0,  worldWidth,0,  worldWidth-offset,offset };
+        vertices = new float[] { borderSize,borderSize,  0,0,  worldWidth,0,  worldWidth-borderSize,borderSize };
         bottomBorder = new PolygonActor(vertices);
         bottomBorder.setColor(skin.getColor(Color.Black.getName()));
         gridScene.addActor(bottomBorder);
         
-        vertices = new float[] { 0,worldHeight,  offset,worldHeight-offset,  worldWidth-offset,worldHeight-offset,  worldWidth,worldHeight };
+        vertices = new float[] { 0,worldHeight,  borderSize,worldHeight-borderSize,  worldWidth-borderSize,worldHeight-borderSize,  worldWidth,worldHeight };
         topBorder = new PolygonActor(vertices);
         topBorder.setColor(skin.getColor(Color.Black.getName()));
-        topBorder.setPosition(0, worldHeight - offset);
+        topBorder.setPosition(0, worldHeight - borderSize);
         gridScene.addActor(topBorder);
     }
 
@@ -504,11 +505,11 @@ public class GridController extends BaseSystem {
     }
     
     private float toStage(int grid) {
-        return grid * paddedCellSize + offset;
+        return grid * paddedCellSize + offset + borderSize;
     }
     
     private int toGrid(float stage) {
-        return (int) (stage / paddedCellSize);
+        return (int) ((stage - borderSize) / paddedCellSize);
     }
     
     public int getColorCount(int colorNumber) {

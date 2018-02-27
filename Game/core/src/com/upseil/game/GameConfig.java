@@ -70,6 +70,10 @@ public class GameConfig extends AbstractConfig {
             return getInt("gridPadding");
         }
         
+        public float getBorderSize() {
+            return getFloat("borderSize");
+        }
+        
         public float getCellSize() {
             return getFloat("cellSize");
         }

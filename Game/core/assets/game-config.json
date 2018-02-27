@@ -4,8 +4,9 @@
         "exclusionAreaSize": 0.33,
         
         "gridPadding": 10,
+        "borderSize": 15,
         "cellSize": 50,
-        "spacing": 10,
+        "spacing": 6,
         
         "maxRemovalDelay": 0.5,
         "removalDuration": 1.0,
