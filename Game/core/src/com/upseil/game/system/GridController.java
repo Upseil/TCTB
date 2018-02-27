@@ -61,7 +61,7 @@ public class GridController extends BaseSystem {
     private GridConfig config;
     
     private PaddedScreen screenPadding;
-    private Stage stage;
+    private Scene gridScene;
     private float cellSize;
     private float paddedCellSize;
     private float offset;
@@ -100,14 +100,14 @@ public class GridController extends BaseSystem {
         float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
         screenPadding = new PaddedScreen();
         PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
-        stage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
+        Stage gridStage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
         
         Entity gridEntity = world.createEntity();
         EntityEdit gridEdit = gridEntity.edit();
         gridEdit.create(Layer.class).setZIndex(Layers.World.getZIndex());
-        gridEdit.create(InputHandler.class).setProcessor(stage);
-        Scene gridScene = gridEdit.create(Scene.class);
-        gridScene.initialize(stage);//.setTimeScale(0.1f);
+        gridEdit.create(InputHandler.class).setProcessor(gridStage);
+        gridScene = gridEdit.create(Scene.class);
+        gridScene.initialize(gridStage);//.setTimeScale(0.1f);
         tagManager.register(Tag.Grid, gridEntity);
 
         int gridSize = config.getGridSize();
@@ -150,7 +150,7 @@ public class GridController extends BaseSystem {
         }
         
         if (initializeGrid) {
-            stage.clear();
+            gridScene.clear();
             for (int number = 0; number < Color.size(); number++) {
                 cellsByColor.get(number).clear();
             }
@@ -168,30 +168,35 @@ public class GridController extends BaseSystem {
         }
         
         if (newCells.size > 0) {
-            Iterator<CellActor> newCellsIterator = newCells.iterator();
-            while (newCellsIterator.hasNext()) {
-                CellActor cell = newCellsIterator.next();
-                float cellMaxX = cell.getX() + cell.getWidth();
-                float cellMaxY = cell.getY() + cell.getHeight();
-                if (cell.getX() >= 0 && cell.getY() >= 0 && cellMaxX <= stage.getWidth() && cellMaxY <= stage.getHeight()) {
-                    cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
-                    newCellsIterator.remove();
-                }
+            processNewCells();
+        }
+    }
+
+    public void processNewCells() {
+        Iterator<CellActor> newCellsIterator = newCells.iterator();
+        while (newCellsIterator.hasNext()) {
+            CellActor cell = newCellsIterator.next();
+            float cellMaxX = cell.getX() + cell.getWidth();
+            float cellMaxY = cell.getY() + cell.getHeight();
+            if (cell.getX() >= 0 && cell.getY() >= 0 && cellMaxX <= gridScene.getWidth() && cellMaxY <= gridScene.getHeight()) {
+                cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
+                newCellsIterator.remove();
             }
-            
-            if (newCells.size == 0) {
-                GameApplication.HUD.setUpdateValueLabels(true);
-                GameApplication.HUD.setContinousUpdate(false);
-                GameApplication.HUD.setButtonsDisabled(false);
-            }
+        }
+        
+        if (newCells.size == 0) {
+            GameApplication.HUD.setUpdateValueLabels(true);
+            GameApplication.HUD.setContinousUpdate(false);
+            GameApplication.HUD.setButtonsDisabled(false);
         }
     }
 
     public void processRemovalDelays() {
+        float sceneDelta = world.delta * gridScene.getActiveTimeScale();
         Entries<CellActor> cellsToRemove = cellRemovalDelays.entries();
         while (cellsToRemove.hasNext()) {
             Entry<CellActor> entry = cellsToRemove.next();
-            if (entry.value <= world.delta) {
+            if (entry.value <= sceneDelta) {
                 cellsToRemove.remove();
                 gameState.incrementScore();
                 
@@ -202,7 +207,7 @@ public class GridController extends BaseSystem {
                     fillGaps(cellColor);
                 }
             } else {
-                cellRemovalDelays.put(entry.key, entry.value - world.delta);
+                cellRemovalDelays.put(entry.key, entry.value - sceneDelta);
             }
         }
     }
@@ -343,7 +348,7 @@ public class GridController extends BaseSystem {
         int right = Math.round(GameApplication.HUD.getRightWidth()) + padding;
         
         screenPadding.pad(top, left, bottom, right);
-        stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        gridScene.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     public void initializeGrid() {
@@ -398,7 +403,7 @@ public class GridController extends BaseSystem {
     public CellActor createCell(int x, int y, Color color, float size) {
         CellActor cell = new CellActor(skin, color, size);
         cell.setPosition(toStage(x), toStage(y));
-        stage.addActor(cell);
+        gridScene.addActor(cell);
         return cell;
     }
 
