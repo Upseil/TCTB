@@ -54,12 +54,6 @@ import com.upseil.gdx.viewport.PartialWorldViewport;
 
 public class GridController extends BaseSystem {
     
-    // TODO Config
-    private static final float MaxRemoveDelay = 0.5f;
-    private static final float RemoveDuration = 1.0f;
-    private static final float RemoveDistance = 150f;
-    private static final float CellMoveSpeed = 300f;
-    
     private TagManager<Tag> tagManager;
     private ComponentMapper<GameState> gameStateMapper;
 
@@ -79,11 +73,17 @@ public class GridController extends BaseSystem {
     
     private CellActor[][] cells;
     private Array<ObjectSet<CellActor>> cellsByColor;
+    
     private ObjectFloatMap<CellActor> cellRemovalDelays;
     private Color colorToRemove;
+    private float maxRemovalDelay;
+    private float removalDuration;
+    private float removalMoveAmount;
+    private float removalScaleTo;
     
     private Array<Pair<CellActor, MoveToAction>> cellMovements;
     private Array<CellActor> newCells;
+    private float cellMoveSpeed;
     
     @Override
     protected void initialize() {
@@ -91,8 +91,13 @@ public class GridController extends BaseSystem {
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getGridConfig();
-        float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
+        maxRemovalDelay = config.getMaxRemovalDelay();
+        removalDuration = config.getRemovalDuration();
+        removalMoveAmount = config.getRemovalMoveAmount();
+        removalScaleTo = config.getRemovalScaleTo();
+        cellMoveSpeed = config.getCellMoveSpeed();
         
+        float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
         screenPadding = new PaddedScreen();
         PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
         stage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
@@ -221,7 +226,7 @@ public class GridController extends BaseSystem {
             if (cell != null && newX >= 0 && newY >= 0) {
                 float stageX = toStage(newX);
                 float stageY = toStage(newY);
-                float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / CellMoveSpeed;
+                float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / cellMoveSpeed;
                 cellMovements.add(new Pair<CellActor, MoveToAction>(cell, moveTo(stageX, stageY, duration))); // TODO Pool pairs
                 // This cell is now empty -> update new position
                 cells[newX][newY] = cell;
@@ -277,7 +282,7 @@ public class GridController extends BaseSystem {
                         
                         float stageX = toStage(newX);
                         float stageY = toStage(newY);
-                        float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / CellMoveSpeed;
+                        float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / cellMoveSpeed;
                         cellMovements.add(new Pair<CellActor, MoveToAction>(newCell, moveTo(stageX, stageY, duration)));
     
                         newX += colorRemoved == Color.Color1 ? 0 :
@@ -296,7 +301,7 @@ public class GridController extends BaseSystem {
                                                                                   movingCell.getX() + (colorRemoved == Color.Color0 ? movingCell.getWidth() : 0);
                             float previousCellReference = colorRemoved == Color.Color1 ? previousCell.getY() :
                                                                                           previousCell.getX() + (colorRemoved == Color.Color0 ? 0 : previousCell.getWidth());
-                            delay += (Math.abs(cellReference - previousCellReference) - (offset * 2)) / CellMoveSpeed;
+                            delay += (Math.abs(cellReference - previousCellReference) - (offset * 2)) / cellMoveSpeed;
                         }
                         movingCell.addAction(delay(delay, moveAction));
                     }
@@ -313,7 +318,7 @@ public class GridController extends BaseSystem {
         ExtendedRandom random = GameApplication.Random;
         ObjectSet<CellActor> cellsToRemove = cellsByColor.get(colorToRemove.getNumber());
         for (CellActor cell : cellsToRemove) {
-            float removalDelay = random.randomFloat(0, MaxRemoveDelay);
+            float removalDelay = random.randomFloat(0, maxRemovalDelay);
             int x = toGrid(cell.getX());
             int y = toGrid(cell.getY());
             
@@ -322,9 +327,9 @@ public class GridController extends BaseSystem {
 
             cell.toFront();
             cell.addAction(sequence(delay(removalDelay),
-                                     parallel(fadeOut(RemoveDuration, Interpolation.fade),
-                                              scaleTo(0, 0, RemoveDuration, Interpolation.fade),
-                                              moveBy(0, RemoveDistance, RemoveDuration, Interpolation.pow2In)),
+                                     parallel(fadeOut(removalDuration, Interpolation.fade),
+                                              scaleTo(removalScaleTo, removalScaleTo, removalDuration, Interpolation.fade),
+                                              moveBy(0, removalMoveAmount, removalDuration, Interpolation.pow2In)),
                                      removeActor()));
         }
         GameApplication.HUD.setContinousUpdate(true);

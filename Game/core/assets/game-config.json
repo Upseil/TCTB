@@ -5,7 +5,13 @@
         
         "gridPadding": 10,
         "cellSize": 50,
-        "spacing": 10
+        "spacing": 10,
+        
+        "maxRemovalDelay": 0.5,
+        "removalDuration": 1.0,
+        "removalMoveAmount": 150,
+        "removalScaleTo": 0,
+        "cellMoveSpeed": 300
     },
     "HUD": {
         "padding": 10,

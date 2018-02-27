@@ -78,6 +78,26 @@ public class GameConfig extends AbstractConfig {
             return getFloat("spacing");
         }
         
+        public float getMaxRemovalDelay() {
+            return getFloat("maxRemovalDelay");
+        }
+        
+        public float getRemovalDuration() {
+            return getFloat("removalDuration");
+        }
+        
+        public float getRemovalMoveAmount() {
+            return getFloat("removalMoveAmount");
+        }
+        
+        public float getRemovalScaleTo() {
+            return getFloat("removalScaleTo");
+        }
+        
+        public float getCellMoveSpeed() {
+            return getFloat("cellMoveSpeed");
+        }
+        
     }
 
     public static class HUDConfig extends AbstractConfig {
