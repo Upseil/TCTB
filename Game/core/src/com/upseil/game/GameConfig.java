@@ -98,6 +98,14 @@ public class GameConfig extends AbstractConfig {
             return getFloat("cellMoveSpeed");
         }
         
+        public float getSlowMoThresholdFactor() {
+            return getFloat("slowMoThresholdFactor");
+        }
+        
+        public float getMinSlowMoTimeScale() {
+            return getFloat("minSlowMoTimeScale");
+        }
+        
     }
 
     public static class HUDConfig extends AbstractConfig {

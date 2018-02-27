@@ -10,8 +10,11 @@
         "maxRemovalDelay": 0.5,
         "removalDuration": 1.0,
         "removalMoveAmount": 150,
-        "removalScaleTo": 0,
-        "cellMoveSpeed": 300
+        "removalScaleTo": 0.25,
+        "cellMoveSpeed": 300,
+        
+        "slowMoThresholdFactor": 3,
+        "minSlowMoTimeScale": 0.15
     },
     "HUD": {
         "padding": 10,

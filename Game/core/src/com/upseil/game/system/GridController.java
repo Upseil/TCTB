@@ -24,6 +24,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectFloatMap;
 import com.badlogic.gdx.utils.ObjectFloatMap.Entries;
@@ -65,6 +66,8 @@ public class GridController extends BaseSystem {
     private float cellSize;
     private float paddedCellSize;
     private float offset;
+    private float slowMoThresholdFactor;
+    private float minSlowMoTimeScale;
     
     private GameState gameState;
     
@@ -73,6 +76,8 @@ public class GridController extends BaseSystem {
     
     private CellActor[][] cells;
     private Array<ObjectSet<CellActor>> cellsByColor;
+    private CellActor blackCell;
+    private CellActor whiteCell;
     
     private ObjectFloatMap<CellActor> cellRemovalDelays;
     private Color colorToRemove;
@@ -96,6 +101,8 @@ public class GridController extends BaseSystem {
         removalMoveAmount = config.getRemovalMoveAmount();
         removalScaleTo = config.getRemovalScaleTo();
         cellMoveSpeed = config.getCellMoveSpeed();
+        slowMoThresholdFactor = config.getSlowMoThresholdFactor();
+        minSlowMoTimeScale = config.getMinSlowMoTimeScale();
         
         float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing());
         screenPadding = new PaddedScreen();
@@ -169,6 +176,34 @@ public class GridController extends BaseSystem {
         
         if (newCells.size > 0) {
             processNewCells();
+            checkBlackAndWhiteCells();
+            if (newCells.size == 0) {
+                gridScene.setTimeScale(1);
+                GameApplication.HUD.setUpdateValueLabels(true);
+                GameApplication.HUD.setContinousUpdate(false);
+                GameApplication.HUD.setButtonsDisabled(false);
+            }
+        }
+    }
+
+    private void checkBlackAndWhiteCells() {
+        float deltaX = blackCell.getX(Align.center) - whiteCell.getX(Align.center);
+        float deltaY = blackCell.getY(Align.center) - whiteCell.getY(Align.center);
+        float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+        float slowMoThresholdSquared = paddedCellSize * slowMoThresholdFactor * paddedCellSize * slowMoThresholdFactor;
+        if (distanceSquared <= slowMoThresholdSquared) {
+            // TODO Only Apply the time scale, if the black and white cells are moving
+            float timeScale = distanceSquared / slowMoThresholdSquared;
+            gridScene.setTimeScale(Math.max(minSlowMoTimeScale, Interpolation.fade.apply(timeScale)));
+            
+            float loseDistance = cellSize + offset * 2;
+            float loseEpsilon = cellSize / 20;
+            // TODO This is not robust against big delta times
+            // FIXME Doesn't work when the stop movement next to each other
+            if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
+                // TODO Proper state flow
+                gridScene.setPaused(true);
+            }
         }
     }
 
@@ -182,12 +217,6 @@ public class GridController extends BaseSystem {
                 cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
                 newCellsIterator.remove();
             }
-        }
-        
-        if (newCells.size == 0) {
-            GameApplication.HUD.setUpdateValueLabels(true);
-            GameApplication.HUD.setContinousUpdate(false);
-            GameApplication.HUD.setButtonsDisabled(false);
         }
     }
 
@@ -392,12 +421,14 @@ public class GridController extends BaseSystem {
         int whiteX = width - blackX - 1;
         int whiteY = height - blackY - 1;
 
-        createAndSetCell(blackX, blackY, Color.Black, cellSize);
-        createAndSetCell(whiteX, whiteY, Color.White, cellSize);
+        blackCell = createAndSetCell(blackX, blackY, Color.Black, cellSize);
+        whiteCell = createAndSetCell(whiteX, whiteY, Color.White, cellSize);
     }
     
-    private void createAndSetCell(int x, int y, Color color, float size) {
-        setCell(x, y, createCell(x, y, color, size));
+    private CellActor createAndSetCell(int x, int y, Color color, float size) {
+        CellActor cell = createCell(x, y, color, size);
+        setCell(x, y, cell);
+        return cell;
     }
 
     public CellActor createCell(int x, int y, Color color, float size) {
