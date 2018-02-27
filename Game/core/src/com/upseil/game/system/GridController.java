@@ -20,6 +20,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
@@ -86,7 +87,9 @@ public class GridController extends BaseSystem {
     private CellActor[][] cells;
     private Array<ObjectSet<CellActor>> cellsByColor;
     private CellActor blackCell;
+    private final Vector2 previousBlackCellPosition = new Vector2();
     private CellActor whiteCell;
+    private final Vector2 previousWhiteCellPosition = new Vector2();
     
     private ObjectFloatMap<CellActor> cellRemovalDelays;
     private Color colorToRemove;
@@ -209,12 +212,21 @@ public class GridController extends BaseSystem {
     }
 
     private void checkBlackAndWhiteCells() {
+        boolean blackOrWhiteMoving = !previousBlackCellPosition.epsilonEquals(blackCell.getX(), blackCell.getY()) ||
+                                     !previousWhiteCellPosition.epsilonEquals(whiteCell.getX(), whiteCell.getY());
+        if (!blackOrWhiteMoving) {
+            gridScene.setTimeScale(1);
+            return;
+        }
+        previousBlackCellPosition.set(blackCell.getX(), blackCell.getY());
+        previousWhiteCellPosition.set(whiteCell.getX(), whiteCell.getY());
+        
+        
         float deltaX = blackCell.getX(Align.center) - whiteCell.getX(Align.center);
         float deltaY = blackCell.getY(Align.center) - whiteCell.getY(Align.center);
         float distanceSquared = deltaX * deltaX + deltaY * deltaY;
         float slowMoThresholdSquared = paddedCellSize * slowMoThresholdFactor * paddedCellSize * slowMoThresholdFactor;
         if (distanceSquared <= slowMoThresholdSquared) {
-            // TODO Only Apply the time scale, if the black and white cells are moving
             float timeScale = distanceSquared / slowMoThresholdSquared;
             gridScene.setTimeScale(Math.max(minSlowMoTimeScale, Interpolation.fade.apply(timeScale)));
             
@@ -293,7 +305,7 @@ public class GridController extends BaseSystem {
                 newY += colorRemoved == Color.Color1 ? 1 : 0;
             }
             
-            // Advance or break
+            // Increment positions depending on the movement direction
             boolean nextLine = false;
             switch (colorRemoved) {
             case Color0:
@@ -326,18 +338,22 @@ public class GridController extends BaseSystem {
             }
             
             if (nextLine) {
+                // If either newX = -1 or newY = -1, no cells in this line have been removed
                 if (newX >= 0 && newY >= 0) {
                     int newCellsCount = colorRemoved == Color.Color0 ? getGridWidth() - newX :
                                         colorRemoved == Color.Color1 ? getGridHeight() - newY : newX + 1;
                     for (int i = 0; i < newCellsCount; i++) {
+                        // Create new cells outside of the viewport
                         int spawnX = colorRemoved == Color.Color0 ? newX + newCellsCount :
                                      colorRemoved == Color.Color1 ? newX: newX - newCellsCount;
                         int spawnY = colorRemoved == Color.Color1 ? newY + newCellsCount : newY;
                         
                         CellActor newCell = createCell(spawnX, spawnY, getRandomCellColor(), cellSize);
+                        // But add them at their correct position of the logical grid
                         cells[newX][newY] = newCell;
                         newCells.add(newCell);
                         
+                        // Enqueue the new cells movement action, so that it's synced with the actions of the remaining cells
                         float stageX = toStage(newX);
                         float stageY = toStage(newY);
                         float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / cellMoveSpeed;
@@ -350,6 +366,8 @@ public class GridController extends BaseSystem {
                     
                     float delay = 0;
                     Pair<CellActor, MoveToAction>[] movements = cellMovements.items;
+                    // Iterating over the queued movements backwards, accumulating the needed for the previous cell to reach the current cell
+                    // This leads to the illusion that one cell is "pushed" by the cell before.
                     for (int index = cellMovements.size - 1; index >= 0; index--) {
                         CellActor movingCell = movements[index].getA();
                         MoveToAction moveAction = movements[index].getB();
@@ -371,10 +389,17 @@ public class GridController extends BaseSystem {
             }
         }
         
+        // Final steps after the gap filling has been setup
+        
+        // Ensure the borders are drawn on top of the new cells
         topBorder.toFront();
         leftBorder.toFront();
         bottomBorder.toFront();
         rightBorder.toFront();
+        
+        // Initializing the black and white cell movement detection
+        previousBlackCellPosition.set(blackCell.getX(), blackCell.getY());
+        previousWhiteCellPosition.set(whiteCell.getX(), whiteCell.getY());
     }
 
     public void removeCells() {
