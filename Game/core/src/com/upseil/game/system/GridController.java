@@ -9,6 +9,8 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.removeActor;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 
+import java.util.Iterator;
+
 import com.artemis.BaseSystem;
 import com.artemis.ComponentMapper;
 import com.artemis.Entity;
@@ -56,7 +58,7 @@ public class GridController extends BaseSystem {
     private static final float MaxRemoveDelay = 0.5f;
     private static final float RemoveDuration = 1.0f;
     private static final float RemoveDistance = 150f;
-    private static final float ActorMoveSpeed = 150f;
+    private static final float CellMoveSpeed = 300f;
     
     private TagManager<Tag> tagManager;
     private ComponentMapper<GameState> gameStateMapper;
@@ -66,6 +68,7 @@ public class GridController extends BaseSystem {
     
     private PaddedScreen screenPadding;
     private Stage stage;
+    private float cellSize;
     private float paddedCellSize;
     private float offset;
     
@@ -75,10 +78,12 @@ public class GridController extends BaseSystem {
     private boolean initializeGrid;
     
     private CellActor[][] cells;
-    private Array<ObjectSet<CellActor>> actorsByColor;
-    private ObjectFloatMap<CellActor> actorRemovalDelays;
-    private Array<Pair<CellActor, MoveToAction>> actorMovements;
+    private Array<ObjectSet<CellActor>> cellsByColor;
+    private ObjectFloatMap<CellActor> cellRemovalDelays;
     private Color colorToRemove;
+    
+    private Array<Pair<CellActor, MoveToAction>> cellMovements;
+    private Array<CellActor> newCells;
     
     @Override
     protected void initialize() {
@@ -103,12 +108,13 @@ public class GridController extends BaseSystem {
         int gridSize = config.getGridSize();
         cells = new CellActor[gridSize][gridSize];
         int expectedColorCount = getExpectedColorCount();
-        actorsByColor = new Array<>(true, Color.size(), ObjectSet.class);
+        cellsByColor = new Array<>(true, Color.size(), ObjectSet.class);
         for (int number = 0; number < Color.size(); number++) {
-            actorsByColor.add(new ObjectSet<>(expectedColorCount));
+            cellsByColor.add(new ObjectSet<>(expectedColorCount));
         }
-        actorRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
-        actorMovements = new Array<>(true, config.getGridSize(), Pair.class);
+        cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
+        cellMovements = new Array<>(true, config.getGridSize(), Pair.class);
+        newCells = new Array<>(true, expectedColorCount, CellActor.class);
         
         initializeGrid = true;
     }
@@ -141,40 +147,57 @@ public class GridController extends BaseSystem {
         if (initializeGrid) {
             stage.clear();
             for (int number = 0; number < Color.size(); number++) {
-                actorsByColor.get(number).clear();
+                cellsByColor.get(number).clear();
             }
             
             initializeGrid();
             initializeGrid = false;
         }
         
-        if (actorRemovalDelays.size > 0) {
+        if (cellRemovalDelays.size > 0) {
             processRemovalDelays();
         }
         if (colorToRemove != null) {
             removeCells();
             colorToRemove = null;
         }
+        
+        if (newCells.size > 0) {
+            Iterator<CellActor> newCellsIterator = newCells.iterator();
+            while (newCellsIterator.hasNext()) {
+                CellActor cell = newCellsIterator.next();
+                float cellMaxX = cell.getX() + cell.getWidth();
+                float cellMaxY = cell.getY() + cell.getHeight();
+                if (cell.getX() >= 0 && cell.getY() >= 0 && cellMaxX <= stage.getWidth() && cellMaxY <= stage.getHeight()) {
+                    cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
+                    newCellsIterator.remove();
+                }
+            }
+            
+            if (newCells.size == 0) {
+                GameApplication.HUD.setUpdateValueLabels(true);
+                GameApplication.HUD.setContinousUpdate(false);
+                GameApplication.HUD.setButtonsDisabled(false);
+            }
+        }
     }
 
     public void processRemovalDelays() {
-        Entries<CellActor> actorsToRemove = actorRemovalDelays.entries();
-        while (actorsToRemove.hasNext()) {
-            Entry<CellActor> entry = actorsToRemove.next();
+        Entries<CellActor> cellsToRemove = cellRemovalDelays.entries();
+        while (cellsToRemove.hasNext()) {
+            Entry<CellActor> entry = cellsToRemove.next();
             if (entry.value <= world.delta) {
-                actorsToRemove.remove();
+                cellsToRemove.remove();
                 gameState.incrementScore();
                 
                 Color cellColor = entry.key.getCellColor();
-                ObjectSet<CellActor> actors = actorsByColor.get(cellColor.getNumber());
-                actors.remove(entry.key);
-                if (actors.size == 0) {
-                    GameApplication.HUD.setUpdateValueLabels(true);
-                    GameApplication.HUD.setContinousUpdate(false);
+                ObjectSet<CellActor> cells = cellsByColor.get(cellColor.getNumber());
+                cells.remove(entry.key);
+                if (cells.size == 0) {
                     fillGaps(cellColor);
                 }
             } else {
-                actorRemovalDelays.put(entry.key, entry.value - world.delta);
+                cellRemovalDelays.put(entry.key, entry.value - world.delta);
             }
         }
     }
@@ -183,7 +206,8 @@ public class GridController extends BaseSystem {
     private void fillGaps(Color colorRemoved) {
         int x = colorRemoved == Color.Color2 ? getGridWidth() - 1 : 0;
         int y = 0;
-        int newX = -1;        int newY = -1;
+        int newX = -1;
+        int newY = -1;
         boolean done = false;
         
         while (!done) {
@@ -193,15 +217,16 @@ public class GridController extends BaseSystem {
                 newX = x;
                 newY = y;
             } 
-            // First non-empty cell after a new position has been found -> Move actor
+            // First non-empty cell after a new position has been found -> Move cell
             if (cell != null && newX >= 0 && newY >= 0) {
                 float stageX = toStage(newX);
                 float stageY = toStage(newY);
-                float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / ActorMoveSpeed;
-                actorMovements.add(new Pair<CellActor, MoveToAction>(cell, moveTo(stageX, stageY, duration))); // TODO Pool pairs
+                float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / CellMoveSpeed;
+                cellMovements.add(new Pair<CellActor, MoveToAction>(cell, moveTo(stageX, stageY, duration))); // TODO Pool pairs
                 // This cell is now empty -> update new position
                 cells[newX][newY] = cell;
-                newX += colorRemoved == Color.Color1 ? 0 : colorRemoved == Color.Color0 ? 1 : -1;
+                newX += colorRemoved == Color.Color1 ? 0 :
+                        colorRemoved == Color.Color0 ? 1 : -1;
                 newY += colorRemoved == Color.Color1 ? 1 : 0;
             }
             
@@ -238,46 +263,65 @@ public class GridController extends BaseSystem {
             }
             
             if (nextLine) {
+                if (newX >= 0 && newY >= 0) {
+                    int newCellsCount = colorRemoved == Color.Color0 ? getGridWidth() - newX :
+                                        colorRemoved == Color.Color1 ? getGridHeight() - newY : newX + 1;
+                    for (int i = 0; i < newCellsCount; i++) {
+                        int spawnX = colorRemoved == Color.Color0 ? newX + newCellsCount :
+                                     colorRemoved == Color.Color1 ? newX: newX - newCellsCount;
+                        int spawnY = colorRemoved == Color.Color1 ? newY + newCellsCount : newY;
+                        
+                        CellActor newCell = createCell(spawnX, spawnY, getRandomCellColor(), cellSize);
+                        cells[newX][newY] = newCell;
+                        newCells.add(newCell);
+                        
+                        float stageX = toStage(newX);
+                        float stageY = toStage(newY);
+                        float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / CellMoveSpeed;
+                        cellMovements.add(new Pair<CellActor, MoveToAction>(newCell, moveTo(stageX, stageY, duration)));
+    
+                        newX += colorRemoved == Color.Color1 ? 0 :
+                                colorRemoved == Color.Color0 ? 1 : -1;
+                        newY += colorRemoved == Color.Color1 ? 1 : 0;
+                    }
+                    
+                    float delay = 0;
+                    Pair<CellActor, MoveToAction>[] movements = cellMovements.items;
+                    for (int index = cellMovements.size - 1; index >= 0; index--) {
+                        CellActor movingCell = movements[index].getA();
+                        MoveToAction moveAction = movements[index].getB();
+                        if (index < cellMovements.size - 1) {
+                            CellActor previousCell = movements[index + 1].getA();
+                            float cellReference = colorRemoved == Color.Color1 ? movingCell.getY() + movingCell.getHeight() :
+                                                                                  movingCell.getX() + (colorRemoved == Color.Color0 ? movingCell.getWidth() : 0);
+                            float previousCellReference = colorRemoved == Color.Color1 ? previousCell.getY() :
+                                                                                          previousCell.getX() + (colorRemoved == Color.Color0 ? 0 : previousCell.getWidth());
+                            delay += (Math.abs(cellReference - previousCellReference) - (offset * 2)) / CellMoveSpeed;
+                        }
+                        movingCell.addAction(delay(delay, moveAction));
+                    }
+                    cellMovements.clear();
+                }
+                
                 newX = -1;
                 newY = -1;
-
-                // TODO Create new cells
-                
-                float delay = 0;
-                Pair<CellActor, MoveToAction>[] movements = actorMovements.items;
-                for (int index = actorMovements.size - 1; index >= 0; index--) {
-                    CellActor actor = movements[index].getA();
-                    MoveToAction moveAction = movements[index].getB();
-                    if (index < actorMovements.size - 1) {
-                        CellActor previousActor = movements[index + 1].getA();
-                        float actorReference = colorRemoved == Color.Color1 ? actor.getY() + actor.getHeight() :
-                                                                              actor.getX() + (colorRemoved == Color.Color0 ? actor.getWidth() : 0);
-                        float previousActorReference = colorRemoved == Color.Color1 ? previousActor.getY() :
-                                                                                      previousActor.getX() + (colorRemoved == Color.Color0 ? 0 : previousActor.getWidth());
-                        delay += (Math.abs(actorReference - previousActorReference) - (offset * 2)) / ActorMoveSpeed;
-                    }
-                    actor.addAction(delay(delay, moveAction));
-                }
-                actorMovements.clear();
-                
-                // TODO Re-enable buttons after all movement is done
             }
         }
     }
 
     public void removeCells() {
         ExtendedRandom random = GameApplication.Random;
-        ObjectSet<CellActor> actors = actorsByColor.get(colorToRemove.getNumber());
-        for (CellActor actor : actors) {
+        ObjectSet<CellActor> cellsToRemove = cellsByColor.get(colorToRemove.getNumber());
+        for (CellActor cell : cellsToRemove) {
             float removalDelay = random.randomFloat(0, MaxRemoveDelay);
-            int x = toGrid(actor.getX());
-            int y = toGrid(actor.getY());
+            int x = toGrid(cell.getX());
+            int y = toGrid(cell.getY());
             
             cells[x][y] = null;
-            actorRemovalDelays.put(actor, removalDelay);
+            cellRemovalDelays.put(cell, removalDelay);
 
-            actor.toFront();
-            actor.addAction(sequence(delay(removalDelay),
+            cell.toFront();
+            cell.addAction(sequence(delay(removalDelay),
                                      parallel(fadeOut(RemoveDuration, Interpolation.fade),
                                               scaleTo(0, 0, RemoveDuration, Interpolation.fade),
                                               moveBy(0, RemoveDistance, RemoveDuration, Interpolation.pow2In)),
@@ -298,7 +342,7 @@ public class GridController extends BaseSystem {
     }
 
     public void initializeGrid() {
-        float cellSize = config.getCellSize();
+        cellSize = config.getCellSize();
         paddedCellSize = cellSize + config.getSpacing();
         offset = config.getSpacing() / 2;
 
@@ -306,7 +350,7 @@ public class GridController extends BaseSystem {
         for (int x = 0; x < getGridWidth(); x++) {
             for (int y = 0; y < getGridHeight(); y++) {
                 if (cells[x][y] == null) {
-                    createCellActor(x, y, getRandomCellColor(), cellSize);
+                    createAndSetCell(x, y, getRandomCellColor(), cellSize);
                 }
             }
         }
@@ -333,24 +377,31 @@ public class GridController extends BaseSystem {
         int maxY = Math.round(exclusionAreaY);
         
         ExtendedRandom random = GameApplication.Random;
-        int blackX = random.randomBoolean() ? random.randomInt(0, maxX - 1) : random.randomInt(minX, width - 1);
-        int blackY = random.randomBoolean() ? random.randomInt(0, maxY - 1) : random.randomInt(minY, height - 1);
+        int blackX = random.randomBoolean() ? random.randomInt(1, maxX - 1) : random.randomInt(minX, width - 2);
+        int blackY = random.randomBoolean() ? random.randomInt(1, maxY - 1) : random.randomInt(minY, height - 2);
         int whiteX = width - blackX - 1;
         int whiteY = height - blackY - 1;
 
-        createCellActor(blackX, blackY, Color.Black, cellSize);
-        createCellActor(whiteX, whiteY, Color.White, cellSize);
+        createAndSetCell(blackX, blackY, Color.Black, cellSize);
+        createAndSetCell(whiteX, whiteY, Color.White, cellSize);
     }
     
-    private void createCellActor(int x, int y, Color color, float size) {
-        CellActor actor = new CellActor(skin, color, size);
-        actor.setPosition(toStage(x), toStage(y));
-        stage.addActor(actor);
-        
-        cells[x][y] = actor;
-        int colorNumber = color.getNumber();
+    private void createAndSetCell(int x, int y, Color color, float size) {
+        setCell(x, y, createCell(x, y, color, size));
+    }
+
+    public CellActor createCell(int x, int y, Color color, float size) {
+        CellActor cell = new CellActor(skin, color, size);
+        cell.setPosition(toStage(x), toStage(y));
+        stage.addActor(cell);
+        return cell;
+    }
+
+    public void setCell(int x, int y, CellActor cell) {
+        cells[x][y] = cell;
+        int colorNumber = cell.getCellColor().getNumber();
         if (colorNumber >= 0) {
-            actorsByColor.get(colorNumber).add(actor);
+            cellsByColor.get(colorNumber).add(cell);
         }
     }
     
@@ -363,7 +414,7 @@ public class GridController extends BaseSystem {
     }
     
     public int getColorCount(int colorNumber) {
-        return actorsByColor.get(colorNumber).size;
+        return cellsByColor.get(colorNumber).size;
     }
 
     public void select(Color color) {

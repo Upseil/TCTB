@@ -28,4 +28,9 @@ public class CellActor extends Image {
         setDrawable(BackgroundBuilder.byColor(this.skin, color.getName()));
     }
     
+    @Override
+    public String toString() {
+        return super.toString() + "[" + color + "]";
+    }
+    
 }

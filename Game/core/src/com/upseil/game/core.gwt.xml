@@ -6,6 +6,7 @@
     <extend-configuration-property name="gdx.reflect.include" value="com.upseil.game.domain" />
     
     <extend-configuration-property name="gdx.reflect.include" value="com.badlogic.gdx.utils.ObjectSet" />
+    <extend-configuration-property name="gdx.reflect.include" value="com.badlogic.gdx.utils.CellActor" />
     
 	
 	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.component" />

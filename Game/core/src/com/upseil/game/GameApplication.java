@@ -82,10 +82,10 @@ public class GameApplication extends ArtemisApplicationAdapter {
         return new World(worldConfiguration);
     }
     
-//    @Override
-//    protected void render(float deltaTime) {
-//        super.render(Math.min(deltaTime, 0.5f));
-//    }
+    @Override
+    protected void render(float deltaTime) {
+        super.render(Math.min(deltaTime, 0.5f));
+    }
     
     @Override
     public void dispose() {

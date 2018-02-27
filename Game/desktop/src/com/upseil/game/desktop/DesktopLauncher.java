@@ -12,9 +12,8 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         LwjglApplicationConfiguration configuration = new LwjglApplicationConfiguration();
         configuration.title = "Three Colors - Three Buttons";
-        configuration.width = 800;
-        configuration.height = 800;
-//        configuration.resizable = false;
+        configuration.width = 1000;
+        configuration.height = 1000;
         
         DesktopCompressingMapper<Savegame> savegameMapper = new DesktopCompressingMapper<>(Savegame.class);
         savegameMapper.setCompressing(true);
