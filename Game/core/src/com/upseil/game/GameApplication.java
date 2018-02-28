@@ -4,7 +4,9 @@ import com.artemis.World;
 import com.artemis.WorldConfiguration;
 import com.artemis.WorldConfigurationBuilder;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.scene2d.HUDStage;
@@ -36,6 +38,8 @@ public class GameApplication extends ArtemisApplicationAdapter {
     private I18NBundle hudMessages;
     private Skin skin;
     
+    private ShaderProgram shader;
+    
     public GameApplication(SerializationContext serializationContext) {
         this.serializationContext = serializationContext;
     }
@@ -51,6 +55,13 @@ public class GameApplication extends ArtemisApplicationAdapter {
         hudMessages = I18NBundle.createBundle(Gdx.files.internal("locale/UI"));
         
         skin = loadSkin("skin/tixel-vis/tixel-vis.json");
+
+        FileHandle vertexShader = Gdx.files.internal("shader/default.vert");
+        FileHandle fragmentShader = Gdx.files.internal("shader/grayscalable.frag");
+        shader = new ShaderProgram(vertexShader, fragmentShader);
+        if (shader.isCompiled() == false) {
+            throw new IllegalArgumentException("Error compiling shader: " + shader.getLog());
+        }
     }
 
     @Override
@@ -67,7 +78,7 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 
                 .with(new LayeredInputSystem())
                 .with(new ClearScreenSystem())
-                .with(new LayeredSceneRenderSystem<>(new PolygonSpriteBatch()))
+                .with(new LayeredSceneRenderSystem<>(new PolygonSpriteBatch(1000, shader)))
 
                 .with(new EventSystem())
                 
@@ -89,6 +100,7 @@ public class GameApplication extends ArtemisApplicationAdapter {
     public void dispose() {
         getWorld().dispose();
         skin.dispose();
+        shader.dispose();
     }
     
 }

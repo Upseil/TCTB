@@ -19,6 +19,7 @@ import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -61,6 +62,7 @@ import com.upseil.gdx.viewport.PartialWorldViewport;
 public class GridController extends BaseSystem {
     
     private TagManager<Tag> tagManager;
+    private LayeredSceneRenderSystem<?> renderSystem;
     private ComponentMapper<GameState> gameStateMapper;
 
     @Wire(name="Skin") private Skin skin;
@@ -79,6 +81,8 @@ public class GridController extends BaseSystem {
     
     private boolean updateScreenSize;
     private boolean initializeGrid;
+    private boolean lost;
+    private float grayness;
     
     private Actor borders[];
     private CellActor[][] cells;
@@ -167,7 +171,8 @@ public class GridController extends BaseSystem {
         }
         
         if (initializeGrid) {
-            clearGrid();
+            gridScene.clear();
+            clearHelperStructures();
             initializeGrid();
             gridScene.setTimeScale(1);
             GameApplication.HUD.setButtonsDisabled(false);
@@ -185,13 +190,22 @@ public class GridController extends BaseSystem {
         if (newCells.size > 0) {
             processNewCells();
             checkBlackAndWhiteCells();
-            if (newCells.size == 0) {
+            if (newCells.size == 0 && !lost) {
                 gridScene.setTimeScale(1);
                 randomizeBorderColors();
                 GameApplication.HUD.setUpdateValueLabels(true);
                 GameApplication.HUD.setContinousUpdate(false);
                 GameApplication.HUD.setButtonsDisabled(false);
             }
+        }
+        
+        if (lost && grayness < 1) {
+            grayness += world.delta;
+            
+            ShaderProgram shader = renderSystem.getGlobalBatch().getShader();
+            shader.begin();
+            shader.setUniformf("u_grayness", Math.min(grayness, 1));
+            shader.end();
         }
     }
 
@@ -224,14 +238,17 @@ public class GridController extends BaseSystem {
         }
     }
 
-    public void clearGrid() {
-        gridScene.clear();
+    public void clearHelperStructures() {
         for (int number = 0; number < Color.size(); number++) {
             cellsByColor.get(number).clear();
         }
         for (int x = 0; x < getGridWidth(); x++) {
             for (int y = 0; y < getGridHeight(); y++) {
-                cells[x][y] = null;
+                CellActor cell = cells[x][y];
+                if (cell != null) {
+                    cell.clearActions();
+                    cells[x][y] = null;
+                }
             }
         }
         cellRemovalDelays.clear();
@@ -240,6 +257,7 @@ public class GridController extends BaseSystem {
     }
 
     // TODO Interpolate sudden changes of the time scale (black and white cell stop moving or are close together and start moving)
+    // TODO Apply time scaling only if it's relevant (e.g. distance gets smaller)
     private void checkBlackAndWhiteCells() {
         boolean blackOrWhiteMoving = !previousBlackCellPosition.epsilonEquals(blackCell.getX(), blackCell.getY()) ||
                                      !previousWhiteCellPosition.epsilonEquals(whiteCell.getX(), whiteCell.getY());
@@ -262,6 +280,7 @@ public class GridController extends BaseSystem {
         float deltaY = blackCenterY - whiteCenterY;
         float distanceSquared = deltaX * deltaX + deltaY * deltaY;
         float loseDistance = cellSize + offset * 2;
+        float loseEpsilon = cellSize / 20;
         
         // Checking if the black or white cell is closer to a border of opposite color
         com.badlogic.gdx.graphics.Color black = skin.getColor(Color.Black.getName());
@@ -277,6 +296,7 @@ public class GridController extends BaseSystem {
             if (borderDistanceSquared <= distanceSquared) {
                 distanceSquared = borderDistanceSquared;
                 loseDistance = offset + (cellSize / 2);
+                loseEpsilon = cellSize / 15;
             }
         }
         
@@ -284,15 +304,17 @@ public class GridController extends BaseSystem {
             float timeScale = distanceSquared / slowMoThresholdSquared;
             gridScene.setTimeScale(Math.max(minSlowMoTimeScale, timeScale));
             
-            float loseEpsilon = cellSize / 20;
             // TODO This is not robust against big delta times
             // FIXME Doesn't work when only one is moving and comes to a stop directly besides the other
+            // FIXME Sometimes the border "collision" doesn't work
             if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
                 // TODO Proper state flow
-//                gridScene.setPaused(true);
+                gridScene.setPaused(true);
+                clearHelperStructures();
+                lost = true;
                 
-                initializeGrid = true;
-                gameState.setScore(0);
+//                initializeGrid = true;
+//                gameState.setScore(0);
             }
         }
     }
