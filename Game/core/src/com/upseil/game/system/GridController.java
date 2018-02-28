@@ -51,6 +51,7 @@ import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
+import com.upseil.gdx.util.GDXArrays;
 import com.upseil.gdx.util.Pair;
 import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
@@ -78,12 +79,8 @@ public class GridController extends BaseSystem {
     
     private boolean updateScreenSize;
     private boolean initializeGrid;
-
-    private Actor topBorder;
-    private Actor leftBorder;
-    private Actor bottomBorder;
-    private Actor rightBorder;
     
+    private Actor borders[];
     private CellActor[][] cells;
     private Array<ObjectSet<CellActor>> cellsByColor;
     private CellActor blackCell;
@@ -130,6 +127,7 @@ public class GridController extends BaseSystem {
         tagManager.register(Tag.Grid, gridEntity);
 
         int gridSize = config.getGridSize();
+        borders = new Actor[4];
         cells = new CellActor[gridSize][gridSize];
         int expectedColorCount = getExpectedColorCount();
         cellsByColor = new Array<>(true, Color.size(), ObjectSet.class);
@@ -189,10 +187,40 @@ public class GridController extends BaseSystem {
             checkBlackAndWhiteCells();
             if (newCells.size == 0) {
                 gridScene.setTimeScale(1);
+                randomizeBorderColors();
                 GameApplication.HUD.setUpdateValueLabels(true);
                 GameApplication.HUD.setContinousUpdate(false);
                 GameApplication.HUD.setButtonsDisabled(false);
             }
+        }
+    }
+
+    private void randomizeBorderColors() {
+        // Prevent color changes of borders that are "touched" by the black or white cell
+        Array<Actor> changeableBorders = new Array<>(false, borders, 0, borders.length);
+
+        int blackX = toGrid(blackCell.getX());
+        int blackY = toGrid(blackCell.getY());
+        if (blackX == 0) changeableBorders.removeValue(getLeftBorder(), true);
+        if (blackX == getGridWidth() - 1) changeableBorders.removeValue(getRightBorder(), true);
+        if (blackY == 0) changeableBorders.removeValue(getBottomBorder(), true);
+        if (blackY == getGridHeight() - 1) changeableBorders.removeValue(getTopBorder(), true);
+
+        int whiteX = toGrid(whiteCell.getX());
+        int whiteY = toGrid(whiteCell.getY());
+        if (whiteX == 0) changeableBorders.removeValue(getLeftBorder(), true);
+        if (whiteX == getGridWidth() - 1) changeableBorders.removeValue(getRightBorder(), true);
+        if (whiteY == 0) changeableBorders.removeValue(getBottomBorder(), true);
+        if (whiteY == getGridHeight() - 1) changeableBorders.removeValue(getTopBorder(), true);
+        
+        // Shuffling the colors of the changeable borders
+        com.badlogic.gdx.graphics.Color[] borderColors = new com.badlogic.gdx.graphics.Color[changeableBorders.size];
+        for (int index = 0; index < borderColors.length; index++) {
+            borderColors[index] = changeableBorders.items[index].getColor().cpy();
+        }
+        GDXArrays.shuffle(borderColors);
+        for (int index = 0; index < borderColors.length; index++) {
+            changeableBorders.items[index].setColor(borderColors[index]);
         }
     }
 
@@ -211,6 +239,7 @@ public class GridController extends BaseSystem {
         newCells.clear();
     }
 
+    // TODO Interpolate sudden changes of the time scale (black and white cell stop moving or are close together and start moving)
     private void checkBlackAndWhiteCells() {
         boolean blackOrWhiteMoving = !previousBlackCellPosition.epsilonEquals(blackCell.getX(), blackCell.getY()) ||
                                      !previousWhiteCellPosition.epsilonEquals(whiteCell.getX(), whiteCell.getY());
@@ -221,7 +250,7 @@ public class GridController extends BaseSystem {
         previousBlackCellPosition.set(blackCell.getX(), blackCell.getY());
         previousWhiteCellPosition.set(whiteCell.getX(), whiteCell.getY());
         
-        
+        // TODO Check distance to walls of opposite and equal color
         float deltaX = blackCell.getX(Align.center) - whiteCell.getX(Align.center);
         float deltaY = blackCell.getY(Align.center) - whiteCell.getY(Align.center);
         float distanceSquared = deltaX * deltaX + deltaY * deltaY;
@@ -233,7 +262,7 @@ public class GridController extends BaseSystem {
             float loseDistance = cellSize + offset * 2;
             float loseEpsilon = cellSize / 20;
             // TODO This is not robust against big delta times
-            // FIXME Doesn't work when the stop movement next to each other
+            // FIXME Doesn't work when only one is moving and comes to a stop directly besides the other
             if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
                 // TODO Proper state flow
 //                gridScene.setPaused(true);
@@ -392,10 +421,9 @@ public class GridController extends BaseSystem {
         // Final steps after the gap filling has been setup
         
         // Ensure the borders are drawn on top of the new cells
-        topBorder.toFront();
-        leftBorder.toFront();
-        bottomBorder.toFront();
-        rightBorder.toFront();
+        for (Actor border : borders) {
+            border.toFront();
+        }
         
         // Initializing the black and white cell movement detection
         previousBlackCellPosition.set(blackCell.getX(), blackCell.getY());
@@ -455,27 +483,49 @@ public class GridController extends BaseSystem {
         float worldWidth = gridScene.getWidth();
         float worldHeight = gridScene.getHeight();
         
-        float[] vertices = new float[] { 0,worldHeight,  0,0,  borderSize,borderSize,  borderSize,worldHeight-borderSize };
-        leftBorder = new PolygonActor(vertices);
-        leftBorder.setColor(skin.getColor(Color.White.getName()));
-        gridScene.addActor(leftBorder);
-        
-        vertices = new float[] { worldWidth-borderSize,worldHeight-borderSize,  worldWidth-borderSize,borderSize,  worldWidth,0,  worldWidth,worldHeight };
-        rightBorder = new PolygonActor(vertices);
-        rightBorder.setPosition(worldWidth - borderSize, 0);
-        rightBorder.setColor(skin.getColor(Color.White.getName()));
-        gridScene.addActor(rightBorder);
-        
-        vertices = new float[] { borderSize,borderSize,  0,0,  worldWidth,0,  worldWidth-borderSize,borderSize };
-        bottomBorder = new PolygonActor(vertices);
-        bottomBorder.setColor(skin.getColor(Color.Black.getName()));
-        gridScene.addActor(bottomBorder);
-        
-        vertices = new float[] { 0,worldHeight,  borderSize,worldHeight-borderSize,  worldWidth-borderSize,worldHeight-borderSize,  worldWidth,worldHeight };
-        topBorder = new PolygonActor(vertices);
+        float[] vertices = new float[] { 0,worldHeight,  borderSize,worldHeight-borderSize,  worldWidth-borderSize,worldHeight-borderSize,  worldWidth,worldHeight };
+        Actor topBorder = new PolygonActor(vertices);
         topBorder.setColor(skin.getColor(Color.Black.getName()));
         topBorder.setPosition(0, worldHeight - borderSize);
         gridScene.addActor(topBorder);
+        borders[0] = topBorder;
+        
+        vertices = new float[] { 0,worldHeight,  0,0,  borderSize,borderSize,  borderSize,worldHeight-borderSize };
+        Actor leftBorder = new PolygonActor(vertices);
+        leftBorder.setPosition(0, 0);
+        leftBorder.setColor(skin.getColor(Color.White.getName()));
+        gridScene.addActor(leftBorder);
+        borders[1] = leftBorder;
+        
+        vertices = new float[] { borderSize,borderSize,  0,0,  worldWidth,0,  worldWidth-borderSize,borderSize };
+        Actor bottomBorder = new PolygonActor(vertices);
+        bottomBorder.setPosition(0, 0);
+        bottomBorder.setColor(skin.getColor(Color.Black.getName()));
+        gridScene.addActor(bottomBorder);
+        borders[2] = bottomBorder;
+        
+        vertices = new float[] { worldWidth-borderSize,worldHeight-borderSize,  worldWidth-borderSize,borderSize,  worldWidth,0,  worldWidth,worldHeight };
+        Actor rightBorder = new PolygonActor(vertices);
+        rightBorder.setPosition(worldWidth - borderSize, 0);
+        rightBorder.setColor(skin.getColor(Color.White.getName()));
+        gridScene.addActor(rightBorder);
+        borders[3] = rightBorder;
+    }
+    
+    private Actor getTopBorder() {
+        return borders[0];
+    }
+    
+    private Actor getLeftBorder() {
+        return borders[1];
+    }
+    
+    private Actor getBottomBorder() {
+        return borders[2];
+    }
+    
+    private Actor getRightBorder() {
+        return borders[3];
     }
 
     private void initializeBlackAndWhite(float exclusionAreaSize, float cellSize) {

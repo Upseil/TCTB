@@ -8,7 +8,6 @@ import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.scene2d.HUDStage;
-import com.upseil.game.system.EntityFactory;
 import com.upseil.game.system.GameInitializer;
 import com.upseil.game.system.GridController;
 import com.upseil.game.system.LoadSystem;
@@ -60,7 +59,6 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 .with(new AllSubscriptionMisplacementWorkaround())
                 
                 .with(new TagManager<Tag>())
-                .with(new EntityFactory())
                 .with(new GameInitializer())
                 
                 .with(new LoadSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
@@ -82,10 +80,10 @@ public class GameApplication extends ArtemisApplicationAdapter {
         return new World(worldConfiguration);
     }
     
-    @Override
-    protected void render(float deltaTime) {
-        super.render(Math.min(deltaTime, 0.5f));
-    }
+//    @Override
+//    protected void render(float deltaTime) {
+//        super.render(Math.min(deltaTime, 0.5f));
+//    }
     
     @Override
     public void dispose() {
