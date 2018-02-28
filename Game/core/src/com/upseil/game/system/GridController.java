@@ -50,6 +50,7 @@ import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
+import com.upseil.gdx.pool.PooledPools;
 import com.upseil.gdx.pool.pair.PairPool;
 import com.upseil.gdx.pool.pair.PooledPair;
 import com.upseil.gdx.scene2d.PolygonActor;
@@ -59,7 +60,6 @@ import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
 import com.upseil.gdx.viewport.PartialWorldViewport;
 
-// TODO Pool CellActors
 public class GridController extends BaseSystem {
     
     private TagManager<Tag> tagManager;
@@ -374,7 +374,9 @@ public class GridController extends BaseSystem {
                 float stageX = toStage(newX);
                 float stageY = toStage(newY);
                 float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / cellMoveSpeed;
-                cellMovements.add(movementPool.obtain().set(cell, moveTo(stageX, stageY, duration)));
+                PooledPair<CellActor, MoveToAction> movement = movementPool.obtain().set(cell, moveTo(stageX, stageY, duration));
+                movement.setFreeA(false);
+                cellMovements.add(movement);
                 // This cell is now empty -> update new position
                 cells[newX][newY] = cell;
                 newX += colorRemoved == Color.Color1 ? 0 :
@@ -434,7 +436,9 @@ public class GridController extends BaseSystem {
                         float stageX = toStage(newX);
                         float stageY = toStage(newY);
                         float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / cellMoveSpeed;
-                        cellMovements.add(movementPool.obtain().set(newCell, moveTo(stageX, stageY, duration)));
+                        PooledPair<CellActor, MoveToAction> movement = movementPool.obtain().set(newCell, moveTo(stageX, stageY, duration));
+                        movement.setFreeA(false);
+                        cellMovements.add(movement);
     
                         newX += colorRemoved == Color.Color1 ? 0 :
                                 colorRemoved == Color.Color0 ? 1 : -1;
@@ -451,9 +455,9 @@ public class GridController extends BaseSystem {
                         if (index < cellMovements.size - 1) {
                             CellActor previousCell = movements[index + 1].getA();
                             float cellReference = colorRemoved == Color.Color1 ? movingCell.getY() + movingCell.getHeight() :
-                                                                                  movingCell.getX() + (colorRemoved == Color.Color0 ? movingCell.getWidth() : 0);
+                                                                                 movingCell.getX() + (colorRemoved == Color.Color0 ? movingCell.getWidth() : 0);
                             float previousCellReference = colorRemoved == Color.Color1 ? previousCell.getY() :
-                                                                                          previousCell.getX() + (colorRemoved == Color.Color0 ? 0 : previousCell.getWidth());
+                                                                                         previousCell.getX() + (colorRemoved == Color.Color0 ? 0 : previousCell.getWidth());
                             delay += (Math.abs(cellReference - previousCellReference) - (offset * 2)) / cellMoveSpeed;
                         }
                         movingCell.addAction(delay(delay, moveAction));
@@ -610,7 +614,7 @@ public class GridController extends BaseSystem {
     }
 
     public CellActor createCell(int x, int y, Color color, float size) {
-        CellActor cell = new CellActor(skin, color, size);
+        CellActor cell = PooledPools.obtain(CellActor.class).initialize(skin, color, size);
         cell.setPosition(toStage(x), toStage(y));
         gridScene.addActor(cell);
         return cell;

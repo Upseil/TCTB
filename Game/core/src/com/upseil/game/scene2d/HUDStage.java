@@ -175,6 +175,7 @@ public class HUDStage extends Stage {
         return text().append(TextColor.byName(color).asMarkup());
     }
 
+    // TODO Disable buttons if their color count is zero
     public void setButtonsDisabled(boolean disabled) {
         for (Button button : buttons) {
             button.setDisabled(disabled);
