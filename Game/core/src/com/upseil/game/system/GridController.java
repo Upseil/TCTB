@@ -50,10 +50,11 @@ import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
+import com.upseil.gdx.pool.pair.PairPool;
+import com.upseil.gdx.pool.pair.PooledPair;
 import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.util.GDXArrays;
-import com.upseil.gdx.util.Pair;
 import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
 import com.upseil.gdx.viewport.PartialWorldViewport;
@@ -99,7 +100,8 @@ public class GridController extends BaseSystem {
     private float removalMoveAmount;
     private float removalScaleTo;
     
-    private Array<Pair<CellActor, MoveToAction>> cellMovements;
+    private PairPool<CellActor, MoveToAction> movementPool;
+    private Array<PooledPair<CellActor, MoveToAction>> cellMovements;
     private Array<CellActor> newCells;
     private float cellMoveSpeed;
     
@@ -139,7 +141,8 @@ public class GridController extends BaseSystem {
             cellsByColor.add(new ObjectSet<>(expectedColorCount));
         }
         cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
-        cellMovements = new Array<>(true, config.getGridSize(), Pair.class);
+        movementPool = new PairPool<>();
+        cellMovements = new Array<>(true, config.getGridSize(), PooledPair.class);
         newCells = new Array<>(true, expectedColorCount, CellActor.class);
         
         initializeGrid = true;
@@ -371,7 +374,7 @@ public class GridController extends BaseSystem {
                 float stageX = toStage(newX);
                 float stageY = toStage(newY);
                 float duration = Math.max(Math.abs(cell.getX() - stageX), Math.abs(cell.getY() - stageY)) / cellMoveSpeed;
-                cellMovements.add(new Pair<CellActor, MoveToAction>(cell, moveTo(stageX, stageY, duration))); // TODO Pool pairs
+                cellMovements.add(movementPool.obtain().set(cell, moveTo(stageX, stageY, duration)));
                 // This cell is now empty -> update new position
                 cells[newX][newY] = cell;
                 newX += colorRemoved == Color.Color1 ? 0 :
@@ -431,7 +434,7 @@ public class GridController extends BaseSystem {
                         float stageX = toStage(newX);
                         float stageY = toStage(newY);
                         float duration = Math.max(Math.abs(newCell.getX() - stageX), Math.abs(newCell.getY() - stageY)) / cellMoveSpeed;
-                        cellMovements.add(new Pair<CellActor, MoveToAction>(newCell, moveTo(stageX, stageY, duration)));
+                        cellMovements.add(movementPool.obtain().set(newCell, moveTo(stageX, stageY, duration)));
     
                         newX += colorRemoved == Color.Color1 ? 0 :
                                 colorRemoved == Color.Color0 ? 1 : -1;
@@ -439,7 +442,7 @@ public class GridController extends BaseSystem {
                     }
                     
                     float delay = 0;
-                    Pair<CellActor, MoveToAction>[] movements = cellMovements.items;
+                    PooledPair<CellActor, MoveToAction>[] movements = cellMovements.items;
                     // Iterating over the queued movements backwards, accumulating the needed for the previous cell to reach the current cell
                     // This leads to the illusion that one cell is "pushed" by the cell before.
                     for (int index = cellMovements.size - 1; index >= 0; index--) {
@@ -454,6 +457,10 @@ public class GridController extends BaseSystem {
                             delay += (Math.abs(cellReference - previousCellReference) - (offset * 2)) / cellMoveSpeed;
                         }
                         movingCell.addAction(delay(delay, moveAction));
+                    }
+                    
+                    for (PooledPair<CellActor, MoveToAction> movement : cellMovements) {
+                        movement.free();
                     }
                     cellMovements.clear();
                 }
