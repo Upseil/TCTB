@@ -250,22 +250,47 @@ public class GridController extends BaseSystem {
         previousBlackCellPosition.set(blackCell.getX(), blackCell.getY());
         previousWhiteCellPosition.set(whiteCell.getX(), whiteCell.getY());
         
-        // TODO Check distance to walls of opposite and equal color
-        float deltaX = blackCell.getX(Align.center) - whiteCell.getX(Align.center);
-        float deltaY = blackCell.getY(Align.center) - whiteCell.getY(Align.center);
-        float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+        
+        // Initializing check values with black to white cell distance
         float slowMoThresholdSquared = paddedCellSize * slowMoThresholdFactor * paddedCellSize * slowMoThresholdFactor;
+        float blackCenterX = blackCell.getX(Align.center);
+        float blackCenterY = blackCell.getY(Align.center);
+        float whiteCenterX = whiteCell.getX(Align.center);
+        float whiteCenterY = whiteCell.getY(Align.center);
+        
+        float deltaX = blackCenterX - whiteCenterX;
+        float deltaY = blackCenterY - whiteCenterY;
+        float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+        float loseDistance = cellSize + offset * 2;
+        
+        // Checking if the black or white cell is closer to a border of opposite color
+        com.badlogic.gdx.graphics.Color black = skin.getColor(Color.Black.getName());
+        for (Actor border : borders) {
+            boolean horizontal = border.getWidth() > border.getHeight();
+            boolean high = border.getX() > 0 || border.getY() > 0;
+            
+            float valueToCheck = border.getColor().equals(black) ? (horizontal ? whiteCenterY : whiteCenterX)
+                                                                 : (horizontal ? blackCenterY : blackCenterX);
+            float borderReference = !high ? borderSize : (horizontal ? gridScene.getHeight() : gridScene.getWidth()) - borderSize;
+            float borderDistance = valueToCheck - borderReference;
+            float borderDistanceSquared = borderDistance * borderDistance;
+            if (borderDistanceSquared <= distanceSquared) {
+                distanceSquared = borderDistanceSquared;
+                loseDistance = offset + (cellSize / 2);
+            }
+        }
+        
         if (distanceSquared <= slowMoThresholdSquared) {
             float timeScale = distanceSquared / slowMoThresholdSquared;
-            gridScene.setTimeScale(Math.max(minSlowMoTimeScale, Interpolation.fade.apply(timeScale)));
+            gridScene.setTimeScale(Math.max(minSlowMoTimeScale, timeScale));
             
-            float loseDistance = cellSize + offset * 2;
             float loseEpsilon = cellSize / 20;
             // TODO This is not robust against big delta times
             // FIXME Doesn't work when only one is moving and comes to a stop directly besides the other
             if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
                 // TODO Proper state flow
 //                gridScene.setPaused(true);
+                
                 initializeGrid = true;
                 gameState.setScore(0);
             }
