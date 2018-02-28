@@ -95,7 +95,7 @@ public class GameApplication extends ArtemisApplicationAdapter {
     
 //    @Override
 //    protected void render(float deltaTime) {
-//        super.render(Math.min(deltaTime, 0.5f));
+//        super.render(Math.min(deltaTime, 0.05f));
 //    }
     
     @Override

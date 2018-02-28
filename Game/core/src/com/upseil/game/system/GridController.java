@@ -306,9 +306,7 @@ public class GridController extends BaseSystem {
             gridScene.setTimeScale(Math.max(minSlowMoTimeScale, timeScale));
             
             // TODO This is not robust against big delta times
-            // FIXME Doesn't work when only one is moving and comes to a stop directly besides the other
-            // FIXME Sometimes the border "collision" doesn't work
-            if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
+             if (Math.abs(distanceSquared - (loseDistance * loseDistance)) <= (loseEpsilon * loseEpsilon)) {
                 // TODO Proper state flow
                 gridScene.setPaused(true);
                 clearHelperStructures();
@@ -324,13 +322,20 @@ public class GridController extends BaseSystem {
         Iterator<CellActor> newCellsIterator = newCells.iterator();
         while (newCellsIterator.hasNext()) {
             CellActor cell = newCellsIterator.next();
-            float cellMaxX = cell.getX() + cell.getWidth();
-            float cellMaxY = cell.getY() + cell.getHeight();
-            if (cell.getX() >= 0 && cell.getY() >= 0 && cellMaxX <= gridScene.getWidth() && cellMaxY <= gridScene.getHeight()) {
+            boolean isInsideGrid = isInsideGrid(cell);
+            if (isInsideGrid) {
                 cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
                 newCellsIterator.remove();
             }
         }
+    }
+
+    public boolean isInsideGrid(CellActor cell) {
+        float cellMaxX = cell.getX() + cell.getWidth();
+        float cellMaxY = cell.getY() + cell.getHeight();
+        return cell.getX() >= borderSize + offset && cell.getY() >= borderSize + offset &&
+               cellMaxX <= gridScene.getWidth() - borderSize - offset &&
+               cellMaxY <= gridScene.getHeight() - borderSize - offset;
     }
 
     public void processRemovalDelays() {
