@@ -201,11 +201,9 @@ public class GridController extends BaseSystem {
         
         if (lost && grayness < 1) {
             grayness += world.delta;
-            
-            ShaderProgram shader = renderSystem.getGlobalBatch().getShader();
-            shader.begin();
-            shader.setUniformf("u_grayness", Math.min(grayness, 1));
-            shader.end();
+            ShaderProgram shader = renderSystem.getGlobalBatch().getShader(); 
+            int attribute = shader.getAttributeLocation("a_grayness");
+            Gdx.gl20.glVertexAttrib1f(attribute, Math.min(grayness, 1));
         }
     }
 

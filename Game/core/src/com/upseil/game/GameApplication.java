@@ -56,12 +56,14 @@ public class GameApplication extends ArtemisApplicationAdapter {
         
         skin = loadSkin("skin/tixel-vis/tixel-vis.json");
 
-        FileHandle vertexShader = Gdx.files.internal("shader/default.vert");
-        FileHandle fragmentShader = Gdx.files.internal("shader/grayscalable.frag");
+        FileHandle vertexShader = Gdx.files.internal("shader/grayscalable.vert");
+        FileHandle fragmentShader = Gdx.files.internal("shader/default.frag");
         shader = new ShaderProgram(vertexShader, fragmentShader);
         if (shader.isCompiled() == false) {
             throw new IllegalArgumentException("Error compiling shader: " + shader.getLog());
         }
+        int attribute = shader.getAttributeLocation("a_grayness");
+        Gdx.gl20.glVertexAttrib1f(attribute, 0);
     }
 
     @Override
