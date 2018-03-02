@@ -17,8 +17,6 @@ import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
@@ -151,14 +149,6 @@ public class GridController extends BaseSystem {
     public int getExpectedColorCount() {
         int expectedColorCount = (getGridWidth() * getGridHeight()) / Color.size();
         return expectedColorCount;
-    }
-
-    public Sprite createSpriteForColor(int colorNumber) {
-        Color color = Color.forNumber(colorNumber);
-        TextureRegion texture = skin.get("t-dot", TextureRegion.class);
-        Sprite sprite = new Sprite(texture);
-        sprite.setColor(skin.getColor(color.getName()));
-        return sprite;
     }
     
     @Override
@@ -429,7 +419,7 @@ public class GridController extends BaseSystem {
                     for (int i = 0; i < newCellsCount; i++) {
                         // Create new cells outside of the viewport
                         int spawnX = colorRemoved == Color.Color0 ? newX + newCellsCount :
-                                     colorRemoved == Color.Color1 ? newX: newX - newCellsCount;
+                                     colorRemoved == Color.Color1 ? newX : newX - newCellsCount;
                         int spawnY = colorRemoved == Color.Color1 ? newY + newCellsCount : newY;
                         
                         CellActor newCell = createCell(spawnX, spawnY, getRandomCellColor(), cellSize);

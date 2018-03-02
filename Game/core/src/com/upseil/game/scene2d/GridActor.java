@@ -2,6 +2,7 @@ package com.upseil.game.scene2d;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeOut;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
@@ -11,7 +12,9 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectFloatMap;
 import com.badlogic.gdx.utils.ObjectFloatMap.Entries;
@@ -26,6 +29,8 @@ import com.upseil.game.event.CellRemovalEvent;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.pool.PooledPools;
+import com.upseil.gdx.pool.pair.PairPool;
+import com.upseil.gdx.pool.pair.PooledPair;
 import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
@@ -45,6 +50,10 @@ public class GridActor extends Group {
     private final CellActor[][] cells;
     private final Array<ObjectSet<CellActor>> cellsByColor;
     private ObjectFloatMap<CellActor> cellRemovalDelays;
+    
+    private final PairPool<CellActor, MoveToAction> movementPool;
+    private final Array<PooledPair<CellActor, MoveToAction>> cellMovements;
+    private final Array<CellActor> newCells;
     
     private CellActor blackCell;
     private CellActor whiteCell;
@@ -74,8 +83,12 @@ public class GridActor extends Group {
             cellsByColor.add(new ObjectSet<>(expectedColorCount));
         }
         cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
-        fillGrid(config.getExclusionAreaSize());
         
+        movementPool = new PairPool<>();
+        cellMovements = new Array<>(false, config.getGridSize(), PooledPair.class);
+        newCells = new Array<>(false, expectedColorCount, CellActor.class);
+        
+        initializeGrid(config.getExclusionAreaSize());
         addActor(cellGroup);
         addActor(borderGroup);
     }
@@ -83,8 +96,8 @@ public class GridActor extends Group {
     // Grid Creation ------------------------------------------------------------------------------
     
     private void initializeBorders() {
-        float worldHeight = borderGroup.getHeight();
-        float worldWidth = borderGroup.getWidth();
+        float worldHeight = getWorldHeight();
+        float worldWidth = getWorldWidth();
         float borderSize = style.borderSize;
         
         float[] vertices = new float[] { 0,worldHeight,  borderSize,worldHeight-borderSize,  worldWidth-borderSize,worldHeight-borderSize,  worldWidth,worldHeight };
@@ -116,7 +129,7 @@ public class GridActor extends Group {
         borders.put(Direction.Right, rightBorder);
     }
 
-    private void fillGrid(float exclusionAreaSize) {
+    private void initializeGrid(float exclusionAreaSize) {
         int width = getGridWidth();
         int height = getGridHeight();
         float exclusionAreaWidth = width * exclusionAreaSize;
@@ -186,11 +199,98 @@ public class GridActor extends Group {
 
             cell.toFront();
             cell.addAction(sequence(delay(removalDelay),
-                                     parallel(fadeOut(duration, Interpolation.fade),
-                                              scaleTo(scaleTo, scaleTo, duration, Interpolation.fade),
-                                              Actions.moveBy(0, moveAmount, duration, Interpolation.pow2In)),
-                                     Actions.removeActor()));
+                                    parallel(fadeOut(duration, Interpolation.fade),
+                                             scaleTo(scaleTo, scaleTo, duration, Interpolation.fade),
+                                             Actions.moveBy(0, moveAmount, duration, Interpolation.pow2In)),
+                                    Actions.removeActor()));
         }
+    }
+    
+    public void fillGrid(Direction moveDirection) {
+        FillGridContext context = new FillGridContext(moveDirection, getGridWidth(), getGridHeight());
+        int x = context.getStartX();
+        int y = context.getStartY();
+        int newX = -1;
+        int newY = -1;
+        while (!context.isGridFilled(x, y)) {
+            CellActor cell = cells[x][y];
+            // First empty cell -> initialize new position
+            if (cell == null && newX < 0 && newY < 0) {
+                newX = x;
+                newY = y;
+            }
+            // Non-empty cell with initialized new position -> queue movement
+            if (cell != null && newX >= 0 && newY >= 0) {
+                cellMovements.add(createLinearMoveToAction(cell, toWorld(newX), toWorld(newY)));
+                cells[x][y] = null;
+                cells[newX][newY] = cell;
+                newX += context.incrementX();
+                newY += context.incrementY();
+            }
+            
+            // Increment position and check if done
+            x += context.incrementX();
+            y += context.incrementY();
+            if (context.moveToNextLine(x, y)) {
+                // If either newX = -1 or newY = -1, no cells in this line have been removed
+                if (newX >= 0 && newY >= 0) {
+                    fillGaps(newX, newY, context);
+                    applyQueuedMovements(context);
+                }
+
+                x = context.nextLineX(x);
+                y = context.nextLineY(y);
+                newX = -1;
+                newY = -1;
+            }
+        }
+    }
+
+    private void fillGaps(int startX, int startY, FillGridContext context) {
+        int gridX = startX;
+        int gridY = startY;
+        int spawnX = context.moveLeft() ? getGridWidth()  : context.moveRight() ? -1 : gridX;
+        int spawnY = context.moveDown() ? getGridHeight() : context.moveUp()    ? -1 : gridY;
+        while (!context.moveToNextLine(gridX, gridY)) {
+            CellActor newCell = createCell(spawnX, spawnY, Color.random(random.asRandom()));
+            cells[gridX][gridY] = newCell;
+            newCells.add(newCell);
+            cellMovements.add(createLinearMoveToAction(newCell, toWorld(gridX), toWorld(gridY)));
+
+            gridX += context.incrementX();
+            gridY += context.incrementY();
+            spawnX += context.incrementX();
+            spawnY += context.incrementY();
+        }
+    }
+
+    private PooledPair<CellActor, MoveToAction> createLinearMoveToAction(CellActor cell, float targetX, float targetY) {
+        float duration = Math.max(Math.abs(cell.getX() - targetX), Math.abs(cell.getY() - targetY)) / style.cellMoveSpeed;
+        PooledPair<CellActor, MoveToAction> movement = movementPool.obtain().set(cell, moveTo(targetX, targetY, duration));
+        movement.setFreeA(false);
+        return movement;
+    }
+    
+    private void applyQueuedMovements(FillGridContext context) {
+        float delay = 0;
+        PooledPair<CellActor, MoveToAction>[] movements = cellMovements.items;
+        // Iterating over the queued movements backwards, accumulating the
+        // needed time for the previous cell to reach the current cell.
+        // This looks like cells are "pushed" by their predecessor.
+        for (int index = cellMovements.size - 1; index >= 0; index--) {
+            CellActor movingCell = movements[index].getA();
+            MoveToAction moveAction = movements[index].getB();
+            if (index < cellMovements.size - 1) {
+                CellActor previousCell = movements[index + 1].getA();
+                delay += (context.calculateDistance(movingCell, previousCell) - (style.cellOffset * 2)) / style.cellMoveSpeed;
+            }
+            movingCell.addAction(delay(delay, moveAction));
+        }
+        
+        for (PooledPair<CellActor, MoveToAction> movement : cellMovements) {
+            movement.free();
+        }
+        cellMovements.clear();
     }
 
     public void randomizeBorderColors() {
@@ -227,10 +327,12 @@ public class GridActor extends Group {
     
     @Override
     public void act(float delta) {
+        // TODO Keep track of the minimum black white distance
         super.act(delta);
         if (cellRemovalDelays.size > 0) {
             processCellRemovalDelays(delta);
         }
+        // TODO Process new cells
     }
 
     public void processCellRemovalDelays(float delta) {
@@ -256,14 +358,18 @@ public class GridActor extends Group {
         }
     }
     
-    // Data Acquisition ---------------------------------------------------------------------------
-    
-    private float toWorld(int grid) {
-        return grid * style.paddedCellSize + style.cellOffset + style.borderSize;
+    // Data Polling -------------------------------------------------------------------------------
+
+    public boolean isInsideGrid(Actor cell) {
+        float cellMaxX = cell.getX() + cell.getWidth();
+        float cellMaxY = cell.getY() + cell.getHeight();
+        return cell.getX() >= style.borderSize + style.cellOffset && cell.getY() >= style.borderSize + style.cellOffset &&
+               cellMaxX <= getGridWidth() - style.borderSize - style.cellOffset &&
+               cellMaxY <= getGridHeight() - style.borderSize - style.cellOffset;
     }
     
-    private int toGrid(float stage) {
-        return (int) ((stage - style.borderSize) / style.paddedCellSize);
+    public int toGrid(float world) {
+        return (int) ((world - style.borderSize) / style.paddedCellSize);
     }
     
     public int getGridWidth() {
@@ -272,6 +378,18 @@ public class GridActor extends Group {
     
     public int getGridHeight() {
         return cells[0].length;
+    }
+    
+    public float toWorld(int grid) {
+        return grid * style.paddedCellSize + style.cellOffset + style.borderSize;
+    }
+
+    public float getWorldWidth() {
+        return borderGroup.getWidth();
+    }
+
+    public float getWorldHeight() {
+        return borderGroup.getHeight();
     }
     
     public int getColorCount(Color color) {
@@ -318,6 +436,91 @@ public class GridActor extends Group {
             this.removalDuration = removalDuration;
             this.removalMoveAmount = removalMoveAmount;
             this.removalScaleTo = removalScaleTo;
+        }
+        
+    }
+    
+    private static class FillGridContext {
+        
+        private final Direction moveDirection;
+        private final int gridWidth;
+        private final int gridHeight;
+        
+        private final int incrementX;
+        private final int incrementY;
+        
+        public FillGridContext(Direction moveDirection, int gridWidth, int gridHeight) {
+            this.moveDirection = moveDirection;
+            this.gridWidth = gridWidth;
+            this.gridHeight = gridHeight;
+            incrementX = moveLeft() ? 1 : moveRight() ? -1 : 0;
+            incrementY = moveDown() ? 1 : moveUp()    ? -1 : 0;
+        }
+
+        public boolean moveUp() {
+            return moveDirection == Direction.Top;
+        }
+        
+        public boolean moveLeft() {
+            return moveDirection == Direction.Left;
+        }
+        
+        public boolean moveDown() {
+            return moveDirection == Direction.Bottom;
+        }
+        
+        public boolean moveRight() {
+            return moveDirection == Direction.Right;
+        }
+        
+        public boolean moveHorizontal() {
+            return moveLeft() || moveRight();
+        }
+        
+        public boolean moveVertical() {
+            return moveUp() || moveDown();
+        }
+        
+        public int incrementX() {
+            return incrementX;
+        }
+        
+        public int incrementY() {
+            return incrementY;
+        }
+        
+        public int getStartY() {
+            return moveUp() ? gridHeight - 1 : 0;
+        }
+
+        public int getStartX() {
+            return moveRight() ? gridWidth - 1 : 0;
+        }
+
+        public boolean moveToNextLine(int x, int y) {
+            return (moveLeft() && x >= gridWidth)  || (moveRight() && x < 0) ||
+                   (moveUp()   && y >= gridHeight) || (moveDown()  && y < 0);
+        }
+
+        public int nextLineX(int currentX) {
+            return moveRight() ? gridWidth - 1 : moveLeft() ? 0 : currentX + 1;
+        }
+
+        public int nextLineY(int currentY) {
+            return moveUp() ? gridHeight - 1 : moveDown() ? 0 : currentY + 1;
+        }
+        
+        public float calculateDistance(CellActor movingCell, CellActor previousCell) {
+            float movingCellReference = moveHorizontal() ? movingCell.getX(Align.center) :
+                                                           movingCell.getY(Align.center);
+            float previousCellReference = moveHorizontal() ? previousCell.getX(Align.center) :
+                                                             previousCell.getY(Align.center);
+            return (Math.abs(movingCellReference - previousCellReference));
+        }
+
+        public boolean isGridFilled(int x, int y) {
+            return (moveHorizontal() && y >= gridHeight) ||
+                   (moveVertical()   && x >= gridWidth);
         }
         
     }
