@@ -7,6 +7,8 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 
+import java.util.Iterator;
+
 import com.artemis.World;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -35,7 +37,7 @@ import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
 
-// TODO Gap filling in arbitrary direction, resetting
+// TODO Resetting
 public class GridActor extends Group {
     
     private final World world;
@@ -57,6 +59,7 @@ public class GridActor extends Group {
     
     private CellActor blackCell;
     private CellActor whiteCell;
+    private float minBlackWhiteDistance;
     
     public GridActor(World world, ExtendedRandom random) {
         this.world = world;
@@ -148,6 +151,7 @@ public class GridActor extends Group {
         int whiteX = width - blackX - 1;
         int whiteY = height - blackY - 1;
 
+        minBlackWhiteDistance = -1;
         blackCell = createAndSetCell(blackX, blackY, Color.Black);
         whiteCell = createAndSetCell(whiteX, whiteY, Color.White);
         for (int x = 0; x < getGridWidth(); x++) {
@@ -327,15 +331,19 @@ public class GridActor extends Group {
     
     @Override
     public void act(float delta) {
-        // TODO Keep track of the minimum black white distance
         super.act(delta);
-        if (cellRemovalDelays.size > 0) {
+        if (isRemovalInProgress()) {
             processCellRemovalDelays(delta);
         }
-        // TODO Process new cells
+        if (isMovementInProgress() || minBlackWhiteDistance < 0) {
+            updateMinBlackWhiteDistance();
+        }
+        if (isMovementInProgress()) {
+            processNewCells();
+        }
     }
 
-    public void processCellRemovalDelays(float delta) {
+    private void processCellRemovalDelays(float delta) {
         int cellsRemovedCount = 0;
         Entries<CellActor> cellsToRemove = cellRemovalDelays.entries();
         while (cellsToRemove.hasNext()) {
@@ -357,15 +365,66 @@ public class GridActor extends Group {
             EventSystem.schedule(world, event);
         }
     }
+
+    private void updateMinBlackWhiteDistance() {
+        float blackCenterX = blackCell.getX(Align.center);
+        float blackCenterY = blackCell.getY(Align.center);
+        float whiteCenterX = whiteCell.getX(Align.center);
+        float whiteCenterY = whiteCell.getY(Align.center);
+
+        // Initializing distance with black to white cell distance
+        float cellDeltaX = blackCenterX - whiteCenterX;
+        float cellDeltaY = blackCenterY - whiteCenterY;
+        float distanceSquared = cellDeltaX * cellDeltaX + cellDeltaY * cellDeltaY;
+
+        // Checking if the black or white cell is closer to a border of opposite color
+        com.badlogic.gdx.graphics.Color black = skin.getColor(Color.Black.getName());
+        for (Direction direction : Direction.values()) { // TODO Adjust after EnumMap implements Iterable
+            Actor border = borders.get(direction);
+            
+            float cellReference = border.getColor().equals(black) ? (direction.isHorizontal() ? whiteCenterY : whiteCenterX)
+                                                                  : (direction.isHorizontal() ? blackCenterY : blackCenterX);
+            float borderReference = style.borderSize;
+            if (border.getX() > 0 || border.getY() > 0) {
+                borderReference = (direction.isHorizontal() ? getWorldHeight() : getWorldWidth()) - style.borderSize;
+            }
+            
+            float borderDistance = cellReference - borderReference;
+            float borderDistanceSquared = borderDistance * borderDistance;
+            if (borderDistanceSquared <= distanceSquared) {
+                distanceSquared = borderDistanceSquared;
+            }
+        }
+        
+        minBlackWhiteDistance = (float) Math.sqrt(distanceSquared);
+    }
+
+    private void processNewCells() {
+        Iterator<CellActor> newCellsIterator = newCells.iterator();
+        while (newCellsIterator.hasNext()) {
+            CellActor cell = newCellsIterator.next();
+            if (isInsideGrid(cell)) {
+                cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
+                newCellsIterator.remove();
+            }
+        }
+    }
     
     // Data Polling -------------------------------------------------------------------------------
 
     public boolean isInsideGrid(Actor cell) {
-        float cellMaxX = cell.getX() + cell.getWidth();
-        float cellMaxY = cell.getY() + cell.getHeight();
-        return cell.getX() >= style.borderSize + style.cellOffset && cell.getY() >= style.borderSize + style.cellOffset &&
+        float cellX = cell.getX();
+        float cellY = cell.getY();
+        float cellMaxX = cellX + cell.getWidth();
+        float cellMaxY = cellY + cell.getHeight();
+        return cellX >= style.borderSize + style.cellOffset &&
+               cellY >= style.borderSize + style.cellOffset &&
                cellMaxX <= getGridWidth() - style.borderSize - style.cellOffset &&
                cellMaxY <= getGridHeight() - style.borderSize - style.cellOffset;
+    }
+    
+    public float getMinBlackWhiteDistance() {
+        return minBlackWhiteDistance;
     }
     
     public int toGrid(float world) {
@@ -400,8 +459,12 @@ public class GridActor extends Group {
         return cellsByColor.get(colorNumber).size;
     }
     
-    public boolean isCellRemovalInProgress() {
+    public boolean isRemovalInProgress() {
         return cellRemovalDelays.size > 0;
+    }
+    
+    public boolean isMovementInProgress() {
+        return newCells.size > 0;
     }
     
     // Utility Classes ----------------------------------------------------------------------------
@@ -511,10 +574,10 @@ public class GridActor extends Group {
         }
         
         public float calculateDistance(CellActor movingCell, CellActor previousCell) {
-            float movingCellReference = moveHorizontal() ? movingCell.getX(Align.center) :
-                                                           movingCell.getY(Align.center);
-            float previousCellReference = moveHorizontal() ? previousCell.getX(Align.center) :
-                                                             previousCell.getY(Align.center);
+            float movingCellReference = moveHorizontal() ? movingCell.getX(Align.center)
+                                                         : movingCell.getY(Align.center);
+            float previousCellReference = moveHorizontal() ? previousCell.getX(Align.center)
+                                                           : previousCell.getY(Align.center);
             return (Math.abs(movingCellReference - previousCellReference));
         }
 
