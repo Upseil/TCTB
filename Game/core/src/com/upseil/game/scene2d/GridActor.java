@@ -27,7 +27,8 @@ import com.upseil.game.GameConfig;
 import com.upseil.game.GameConfig.GridConfig;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
-import com.upseil.game.event.CellRemovalEvent;
+import com.upseil.game.event.CellsAddedEvent;
+import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.pool.PooledPools;
@@ -37,7 +38,6 @@ import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
 
-// TODO Resetting
 public class GridActor extends Group {
     
     private final World world;
@@ -82,7 +82,7 @@ public class GridActor extends Group {
         cellGroup.setBounds(0, 0, worldSize, worldSize);
         cells = new CellActor[size][size];
         cellsByColor = new Array<>(Color.size());
-        for (int i = 0; i < cellsByColor.size; i++) {
+        for (int i = 0; i < Color.size(); i++) {
             cellsByColor.add(new ObjectSet<>(expectedColorCount));
         }
         cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
@@ -360,7 +360,7 @@ public class GridActor extends Group {
         }
         
         if (cellsRemovedCount > 0) {
-            CellRemovalEvent event = PooledPools.obtain(CellRemovalEvent.class);
+            CellsRemovedEvent event = PooledPools.obtain(CellsRemovedEvent.class);
             event.setCount(cellsRemovedCount);
             EventSystem.schedule(world, event);
         }
@@ -382,8 +382,8 @@ public class GridActor extends Group {
         for (Direction direction : Direction.values()) { // TODO Adjust after EnumMap implements Iterable
             Actor border = borders.get(direction);
             
-            float cellReference = border.getColor().equals(black) ? (direction.isHorizontal() ? whiteCenterY : whiteCenterX)
-                                                                  : (direction.isHorizontal() ? blackCenterY : blackCenterX);
+            float cellReference = border.getColor().equals(black) ? (direction.isHorizontal() ? blackCenterY : blackCenterX)
+                                                                  : (direction.isHorizontal() ? whiteCenterY : whiteCenterX);
             float borderReference = style.borderSize;
             if (border.getX() > 0 || border.getY() > 0) {
                 borderReference = (direction.isHorizontal() ? getWorldHeight() : getWorldWidth()) - style.borderSize;
@@ -400,13 +400,21 @@ public class GridActor extends Group {
     }
 
     private void processNewCells() {
+        int cellsAddedCount = 0;
         Iterator<CellActor> newCellsIterator = newCells.iterator();
         while (newCellsIterator.hasNext()) {
             CellActor cell = newCellsIterator.next();
             if (isInsideGrid(cell)) {
                 cellsByColor.get(cell.getCellColor().getNumber()).add(cell);
                 newCellsIterator.remove();
+                cellsAddedCount++;
             }
+        }
+        
+        if (cellsAddedCount > 0) {
+            CellsAddedEvent event = PooledPools.obtain(CellsAddedEvent.class);
+            event.setCount(cellsAddedCount);
+            EventSystem.schedule(world, event);
         }
     }
     
@@ -419,8 +427,8 @@ public class GridActor extends Group {
         float cellMaxY = cellY + cell.getHeight();
         return cellX >= style.borderSize + style.cellOffset &&
                cellY >= style.borderSize + style.cellOffset &&
-               cellMaxX <= getGridWidth() - style.borderSize - style.cellOffset &&
-               cellMaxY <= getGridHeight() - style.borderSize - style.cellOffset;
+               cellMaxX <= getWorldWidth() - style.borderSize - style.cellOffset &&
+               cellMaxY <= getWorldHeight() - style.borderSize - style.cellOffset;
     }
     
     public float getMinBlackWhiteDistance() {
@@ -465,6 +473,10 @@ public class GridActor extends Group {
     
     public boolean isMovementInProgress() {
         return newCells.size > 0;
+    }
+    
+    public GridStyle getStyle() {
+        return style;
     }
     
     // Utility Classes ----------------------------------------------------------------------------
@@ -562,7 +574,7 @@ public class GridActor extends Group {
 
         public boolean moveToNextLine(int x, int y) {
             return (moveLeft() && x >= gridWidth)  || (moveRight() && x < 0) ||
-                   (moveUp()   && y >= gridHeight) || (moveDown()  && y < 0);
+                   (moveDown() && y >= gridHeight) || (moveUp()    && y < 0);
         }
 
         public int nextLineX(int currentX) {
@@ -578,7 +590,9 @@ public class GridActor extends Group {
                                                          : movingCell.getY(Align.center);
             float previousCellReference = moveHorizontal() ? previousCell.getX(Align.center)
                                                            : previousCell.getY(Align.center);
-            return (Math.abs(movingCellReference - previousCellReference));
+            float cellSize = moveHorizontal() ? movingCell.getWidth() / 2 + previousCell.getWidth() / 2
+                                              : movingCell.getHeight() / 2 + previousCell.getHeight() / 2;
+            return Math.abs(movingCellReference - previousCellReference) - cellSize;
         }
 
         public boolean isGridFilled(int x, int y) {

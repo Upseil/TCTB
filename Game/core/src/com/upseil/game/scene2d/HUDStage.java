@@ -21,7 +21,10 @@ import com.upseil.game.GameConfig.HUDConfig;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
+import com.upseil.game.event.CellsAddedEvent;
+import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.game.system.GridController;
+import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
@@ -49,7 +52,6 @@ public class HUDStage extends Stage {
     private GameState gameState;
     
     private boolean updateValueLabels;
-    private boolean continousUpdate;
     
     public HUDStage(Viewport viewport, Batch batch, World world) {
         super(viewport, batch);
@@ -58,6 +60,13 @@ public class HUDStage extends Stage {
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getHUDConfig();
         buttonRatio = config.getButtonRatio();
+        
+        EventSystem eventSystem = world.getSystem(EventSystem.class);
+        eventSystem.registerHandler(CellsRemovedEvent.Type, event -> {
+            gameState.incrementScore(event.getCount());
+            setUpdateValueLabels(true);
+        });
+        eventSystem.registerHandler(CellsAddedEvent.Type, e -> setUpdateValueLabels(true));
         
         container = new Table(skin);
         container.setFillParent(true);
@@ -183,15 +192,11 @@ public class HUDStage extends Stage {
     }
     
     private boolean updateValueLabels() {
-        return updateValueLabels || continousUpdate;
+        return updateValueLabels;
     }
 
     public void setUpdateValueLabels(boolean updateValueLabels) {
         this.updateValueLabels = updateValueLabels;
-    }
-
-    public void setContinousUpdate(boolean continousUpdate) {
-        this.continousUpdate = continousUpdate;
     }
 
     @Override
