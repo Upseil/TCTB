@@ -7,6 +7,7 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import com.artemis.World;
@@ -61,7 +62,7 @@ public class GridActor extends Group {
     private CellActor whiteCell;
     private float minBlackWhiteDistance;
     
-    public GridActor(World world, ExtendedRandom random) {
+    public GridActor(World world, ExtendedRandom random, float exclusionAreaSize) {
         this.world = world;
         this.skin = world.getRegistered("Skin");
         GameConfig gameConfig = world.getRegistered("Config");
@@ -91,7 +92,7 @@ public class GridActor extends Group {
         cellMovements = new Array<>(false, config.getGridSize(), PooledPair.class);
         newCells = new Array<>(false, expectedColorCount, CellActor.class);
         
-        initializeGrid(config.getExclusionAreaSize());
+        initializeGrid(exclusionAreaSize);
         addActor(cellGroup);
         addActor(borderGroup);
     }
@@ -327,6 +328,18 @@ public class GridActor extends Group {
         }
     }
     
+    public void reset(float exclusionAreaSize) {
+        for (ObjectSet<CellActor> cells : cellsByColor) {
+            cells.clear();
+        }
+        GDXArrays.clear(cells);
+        cellRemovalDelays.clear();
+        cellMovements.clear();
+        newCells.clear();
+        cellGroup.clear();
+        initializeGrid(exclusionAreaSize);
+    }
+    
     // Processing ---------------------------------------------------------------------------------
     
     @Override
@@ -366,6 +379,7 @@ public class GridActor extends Group {
         }
     }
 
+    // FIXME Border distance calculation seems broken
     private void updateMinBlackWhiteDistance() {
         float blackCenterX = blackCell.getX(Align.center);
         float blackCenterY = blackCell.getY(Align.center);

@@ -63,6 +63,7 @@ public class CellActor extends Image implements Pooled<CellActor> {
         pool = null;
         skin = null;
         color = null;
+        clear();
         setDrawable(null);
         setSize(0, 0);
         setOrigin(Align.bottomLeft);

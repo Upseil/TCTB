@@ -79,7 +79,7 @@ public class GridController extends BaseSystem {
         gridEdit.create(InputHandler.class).setProcessor(gridStage);
         gridScene = gridEdit.create(Scene.class).initialize(gridStage);
 
-        grid = new GridActor(world, GameApplication.Random);
+        grid = new GridActor(world, GameApplication.Random, config.getExclusionAreaSize());
         gridEdit.create(ActorComponent.class).set(grid);
         gridScene.addActor(grid);
 
@@ -110,12 +110,12 @@ public class GridController extends BaseSystem {
             updateScreenSize = false;
         }
         
-//        if (resetGrid) {
-//            // TODO Reset grid
-//            gridScene.setTimeScale(1);
-//            GameApplication.HUD.setButtonsDisabled(false);
-//            resetGrid = false;
-//        }
+        if (resetGrid) {
+            gridScene.setTimeScale(1);
+            GameApplication.HUD.setButtonsDisabled(false);
+            grid.reset(config.getExclusionAreaSize());
+            resetGrid = false;
+        }
         
         if (lost && grayness < 1) {
             grayness += world.delta;
@@ -203,11 +203,12 @@ public class GridController extends BaseSystem {
             // TODO This is not robust against big delta times
              if (Math.abs(minBlackWhiteDistance - loseDistance) <= loseEpsilon) {
                 // TODO Proper state flow
-                gridScene.setPaused(true);
-                lost = true;
+//                gridScene.setPaused(true);
+//                lost = true;
                 
-//                initializeGrid = true;
-//                gameState.setScore(0);
+                resetGrid = true;
+                gameState.setScore(0);
+                GameApplication.HUD.setUpdateValueLabels(true);
             }
 //        }
     }
