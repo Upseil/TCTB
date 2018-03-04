@@ -7,6 +7,7 @@ import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
@@ -124,15 +125,14 @@ public class GridController extends BaseSystem {
             Gdx.gl20.glVertexAttrib1f(attribute, Math.min(grayness, 1));
         }
         
-        if (blackWhiteDistance > 0 && grid.isMovementInProgress()) {
+        if (blackWhiteDistance >= 0) {
             checkBlackAndWhiteCells();
-        }
-        if (blackWhiteDistance > 0 && !grid.isMovementInProgress() && !lost) {
-            gridScene.setTimeScale(1);
-            grid.randomizeBorderColors();
-//            GameApplication.HUD.setUpdateValueLabels(true);
-            GameApplication.HUD.setButtonsDisabled(false);
-            blackWhiteDistance = -1;
+            if (!grid.isMovementInProgress() && !lost) {
+                gridScene.setTimeScale(1);
+                grid.randomizeBorderColors();
+                GameApplication.HUD.setButtonsDisabled(false);
+                blackWhiteDistance = -1;
+            }
         }
         
         if (fillDirection != null && !grid.isRemovalInProgress()) {
@@ -147,24 +147,6 @@ public class GridController extends BaseSystem {
             colorToRemove = null;
         }
     }
-
-//    private void clearHelperStructures() {
-//        for (int number = 0; number < Color.size(); number++) {
-//            cellsByColor.get(number).clear();
-//        }
-//        for (int x = 0; x < getGridWidth(); x++) {
-//            for (int y = 0; y < getGridHeight(); y++) {
-//                CellActor cell = cells[x][y];
-//                if (cell != null) {
-//                    cell.clearActions();
-//                    cells[x][y] = null;
-//                }
-//            }
-//        }
-//        cellRemovalDelays.clear();
-//        cellMovements.clear();
-//        newCells.clear();
-//    }
 
     private Direction fromColor(Color color) {
         switch (color) {
@@ -190,27 +172,20 @@ public class GridController extends BaseSystem {
         GridStyle gridStyle = grid.getStyle();
 //        float slowMoThreshold = gridStyle.paddedCellSize * slowMoThresholdFactor;
         // TODO How to get the entity that is nearest?
-        float loseDistance = gridStyle.cellSize + gridStyle.cellOffset * 2;
-        float loseEpsilon = gridStyle.cellSize / 20;
-//        loseDistance = offset + (cellSize / 2);
-//        loseEpsilon = cellSize / 15;
+        float loseEpsilon = gridStyle.cellSize / 100;
         
         float minBlackWhiteDistance = grid.getMinBlackWhiteDistance();
-//        if (minBlackWhiteDistance <= slowMoThreshold) {
-//            float timeScale = minBlackWhiteDistance / slowMoThreshold;
-//            gridScene.setTimeScale(Math.max(minSlowMoTimeScale, timeScale));
-            
-            // TODO This is not robust against big delta times
-             if (Math.abs(minBlackWhiteDistance - loseDistance) <= loseEpsilon) {
-                // TODO Proper state flow
+        // TODO This is not robust against big delta times
+         if (MathUtils.isZero(minBlackWhiteDistance, loseEpsilon)) {
+            // TODO Proper state flow
 //                gridScene.setPaused(true);
-//                lost = true;
-                
-                resetGrid = true;
-                gameState.setScore(0);
-                GameApplication.HUD.setUpdateValueLabels(true);
-            }
-//        }
+             grid.abortMovement();
+             lost = true;
+            
+//            resetGrid = true;
+//            gameState.setScore(0);
+//            GameApplication.HUD.setUpdateValueLabels(true);
+        }
     }
 
     public void updateScreenSize() {

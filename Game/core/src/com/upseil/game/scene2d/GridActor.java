@@ -7,7 +7,6 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 import com.artemis.World;
@@ -328,6 +327,15 @@ public class GridActor extends Group {
         }
     }
     
+    public void abortMovement() {
+        for (int x = 0; x < getGridWidth(); x++) {
+            for (int y = 0; y < getGridHeight(); y++) {
+                cells[x][y].clearActions();
+            }
+        }
+        newCells.clear();
+    }
+    
     public void reset(float exclusionAreaSize) {
         for (ObjectSet<CellActor> cells : cellsByColor) {
             cells.clear();
@@ -390,14 +398,15 @@ public class GridActor extends Group {
         float cellDeltaX = blackCenterX - whiteCenterX;
         float cellDeltaY = blackCenterY - whiteCenterY;
         float distanceSquared = cellDeltaX * cellDeltaX + cellDeltaY * cellDeltaY;
+        boolean isCellNearest = true;
 
         // Checking if the black or white cell is closer to a border of opposite color
         com.badlogic.gdx.graphics.Color black = skin.getColor(Color.Black.getName());
         for (Direction direction : Direction.values()) { // TODO Adjust after EnumMap implements Iterable
             Actor border = borders.get(direction);
             
-            float cellReference = border.getColor().equals(black) ? (direction.isHorizontal() ? blackCenterY : blackCenterX)
-                                                                  : (direction.isHorizontal() ? whiteCenterY : whiteCenterX);
+            float cellReference = border.getColor().equals(black) ? (direction.isHorizontal() ? whiteCenterX : whiteCenterY)
+                                                                  : (direction.isHorizontal() ? blackCenterX : blackCenterY);
             float borderReference = style.borderSize;
             if (border.getX() > 0 || border.getY() > 0) {
                 borderReference = (direction.isHorizontal() ? getWorldHeight() : getWorldWidth()) - style.borderSize;
@@ -407,10 +416,13 @@ public class GridActor extends Group {
             float borderDistanceSquared = borderDistance * borderDistance;
             if (borderDistanceSquared <= distanceSquared) {
                 distanceSquared = borderDistanceSquared;
+                isCellNearest = false;
             }
         }
         
-        minBlackWhiteDistance = (float) Math.sqrt(distanceSquared);
+        float distanceSurplus = isCellNearest ? style.cellSize + style.cellSpacing
+                                              : style.cellOffset + style.cellSize / 2;
+        minBlackWhiteDistance = (float) Math.sqrt(distanceSquared) - distanceSurplus;
     }
 
     private void processNewCells() {
@@ -499,6 +511,7 @@ public class GridActor extends Group {
         
         public final float borderSize;
         public final float cellSize;
+        public final float cellSpacing;
         public final float paddedCellSize;
         public final float cellOffset;
         public final float cellMoveSpeed;
@@ -517,8 +530,9 @@ public class GridActor extends Group {
                          float maxRemovalDelay, float removalDuration, float removalMoveAmount, float removalScaleTo) {
             this.borderSize = borderSize;
             this.cellSize = cellSize;
-            paddedCellSize = this.cellSize + spacing;
-            cellOffset = spacing / 2;
+            this.cellSpacing = spacing;
+            this.paddedCellSize = this.cellSize + spacing;
+            this.cellOffset = spacing / 2;
             this.cellMoveSpeed = cellMoveSpeed;
             
             this.maxRemovalDelay = maxRemovalDelay;
