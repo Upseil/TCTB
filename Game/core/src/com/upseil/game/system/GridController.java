@@ -1,12 +1,12 @@
 package com.upseil.game.system;
 
 import com.artemis.BaseSystem;
-import com.artemis.ComponentMapper;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -17,11 +17,9 @@ import com.upseil.game.GameConfig;
 import com.upseil.game.GameConfig.GridConfig;
 import com.upseil.game.Layers;
 import com.upseil.game.Tag;
-import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.scene2d.GridActor;
-import com.upseil.game.scene2d.GridActor.GridStyle;
 import com.upseil.gdx.artemis.component.ActorComponent;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
@@ -39,17 +37,17 @@ public class GridController extends BaseSystem {
     
     private TagManager<Tag> tagManager;
     private LayeredSceneRenderSystem<?> renderSystem;
-    private ComponentMapper<GameState> gameStateMapper;
 
     @Wire(name="Skin") private Skin skin;
     private GridConfig config;
     
     private PaddedScreen screenPadding;
     private Scene gridScene;
-    private float slowMoThresholdFactor;
+    private float slowMoDistanceThreshold;
     private float minSlowMoTimeScale;
+    private float timeScaleAlterationRate;
+    private float loseEpsilon;
     
-    private GameState gameState;
     private GridActor grid;
     
     private boolean updateScreenSize;
@@ -59,6 +57,11 @@ public class GridController extends BaseSystem {
     private Color colorToRemove;
     private Direction fillDirection;
     private float blackWhiteDistance;
+
+    private float startTimeScale;
+    private float targetTimeScale;
+    private float timeScaleAlterationDuration;
+    private float timeScaleAlterationTime;
     
     @Override
     protected void initialize() {
@@ -66,8 +69,10 @@ public class GridController extends BaseSystem {
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getGridConfig();
-        slowMoThresholdFactor = config.getSlowMoThresholdFactor();
+        slowMoDistanceThreshold = (config.getCellSize() + config.getSpacing()) * config.getSlowMoThresholdFactor();
         minSlowMoTimeScale = config.getMinSlowMoTimeScale();
+        timeScaleAlterationRate = (1 - minSlowMoTimeScale) * 3;
+        loseEpsilon = MathUtils.FLOAT_ROUNDING_ERROR * 100;
         
         float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing()) + 2 * config.getBorderSize();
         screenPadding = new PaddedScreen();
@@ -92,16 +97,15 @@ public class GridController extends BaseSystem {
         colorToRemove = null;
         fillDirection = null;
         blackWhiteDistance = -1;
+        startTimeScale = 1;
+        targetTimeScale = 1;
+        timeScaleAlterationDuration = 0;
+        timeScaleAlterationTime = 0;
     }
 
     public int getExpectedColorCount() {
         int expectedColorCount = (grid.getGridWidth() * grid.getGridHeight()) / Color.size();
         return expectedColorCount;
-    }
-    
-    @Override
-    protected void begin() {
-        gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
     }
     
     @Override
@@ -112,7 +116,7 @@ public class GridController extends BaseSystem {
         }
         
         if (resetGrid) {
-            gridScene.setTimeScale(1);
+            setTimeScale(1);
             GameApplication.HUD.setButtonsDisabled(false);
             grid.reset(config.getExclusionAreaSize());
             resetGrid = false;
@@ -126,11 +130,13 @@ public class GridController extends BaseSystem {
         }
         
         if (blackWhiteDistance >= 0) {
-            checkBlackAndWhiteCells();
-            if (!grid.isMovementInProgress() && !lost) {
-                gridScene.setTimeScale(1);
-                grid.randomizeBorderColors();
-                GameApplication.HUD.setButtonsDisabled(false);
+            checkBlackWhiteDistance();
+            if (!grid.isMovementInProgress()) {
+                if (!lost) {
+                    grid.randomizeBorderColors();
+                    GameApplication.HUD.setButtonsDisabled(false);
+                }
+                setTimeScale(1);
                 blackWhiteDistance = -1;
             }
         }
@@ -145,6 +151,14 @@ public class GridController extends BaseSystem {
             grid.removeCells(colorToRemove);
             fillDirection = fromColor(colorToRemove);
             colorToRemove = null;
+        }
+        
+        if (timeScaleAlterationTime < timeScaleAlterationDuration) {
+            timeScaleAlterationTime += world.delta;
+            float timeScaleAlpha = MathUtils.clamp(timeScaleAlterationTime / timeScaleAlterationDuration, 0, 1);
+            float timeScale = Interpolation.pow2Out.apply(startTimeScale, targetTimeScale, timeScaleAlpha);
+            gridScene.setTimeScale(timeScale);
+//            System.out.println(String.format("Target %.2f, Current %.2f, Alpha %.4f", targetTimeScale, timeScale, timeScaleAlpha));
         }
     }
 
@@ -165,20 +179,18 @@ public class GridController extends BaseSystem {
                                            Color.class.getSimpleName() + " " + color);
     }
 
-    // TODO Interpolate sudden changes of the time scale (black and white cell stop moving or are close together and start moving)
-    // TODO Apply time scaling only if it's relevant (e.g. distance gets smaller)
-    private void checkBlackAndWhiteCells() {
-        // TODO Check if the minimum distance changed
-        GridStyle gridStyle = grid.getStyle();
-//        float slowMoThreshold = gridStyle.paddedCellSize * slowMoThresholdFactor;
-        // TODO How to get the entity that is nearest?
-        float loseEpsilon = gridStyle.cellSize / 100;
+    private void checkBlackWhiteDistance() {
+        float newBlackWhiteDistance = grid.getMinBlackWhiteDistance();
+        if (newBlackWhiteDistance >= blackWhiteDistance) {
+            setTargetTimeScale(1);
+            return;
+        }
         
-        float minBlackWhiteDistance = grid.getMinBlackWhiteDistance();
+        blackWhiteDistance = newBlackWhiteDistance;
+        setTargetTimeScale(blackWhiteDistance / slowMoDistanceThreshold);
         // TODO This is not robust against big delta times
-         if (MathUtils.isZero(minBlackWhiteDistance, loseEpsilon)) {
+         if (MathUtils.isZero(blackWhiteDistance, loseEpsilon)) {
             // TODO Proper state flow
-//                gridScene.setPaused(true);
              grid.abortMovement();
              lost = true;
             
@@ -186,6 +198,19 @@ public class GridController extends BaseSystem {
 //            gameState.setScore(0);
 //            GameApplication.HUD.setUpdateValueLabels(true);
         }
+    }
+    
+    private void setTimeScale(float timeScale) {
+        gridScene.setTimeScale(timeScale);
+        timeScaleAlterationDuration = 0;
+        timeScaleAlterationTime = 0;
+    }
+    
+    private void setTargetTimeScale(float timeScale) {
+        startTimeScale = gridScene.getTimeScale();
+        targetTimeScale = MathUtils.clamp(timeScale, minSlowMoTimeScale, 1);
+        timeScaleAlterationDuration = Math.abs(startTimeScale - targetTimeScale) / timeScaleAlterationRate;
+        timeScaleAlterationTime = 0;
     }
 
     public void updateScreenSize() {
