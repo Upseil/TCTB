@@ -26,7 +26,6 @@ import com.upseil.game.event.CellsAddedEvent;
 import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.system.EventSystem;
-import com.upseil.gdx.artemis.system.SimpleKeyTypedListener;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
@@ -78,7 +77,7 @@ public class HUDStage extends Stage {
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
             Button button = new Button(skin, text().append("button").append(number).toString());
-            button.addListener(new ButtonListener(this, gridController, Color.forNumber(number), button));
+            button.addListener(new ButtonListener(this, gridController, Color.forNumber(number), button, getKeyCode(number)));
             buttons[number] = button;
         }
         
@@ -104,25 +103,18 @@ public class HUDStage extends Stage {
         addActor(background);
         addActor(container);
         updateValueLabels = true;
-        
-        addListener(new SimpleKeyTypedListener(event -> {
-            int buttonIndex = -1;
-            switch (event.getKeyCode()) {
-            case Keys.LEFT:
-                buttonIndex = 0;
-                break;
-            case Keys.DOWN:
-                buttonIndex = 1;
-                break;
-            case Keys.RIGHT:
-                buttonIndex = 2;
-                break;
-            }
-            if (buttonIndex != -1) {
-                buttons[buttonIndex].toggle();
-            }
-            return buttonIndex != -1;
-        }));
+    }
+    
+    private int getKeyCode(int buttonNumber) {
+        switch (buttonNumber) {
+        case 0:
+            return Keys.LEFT;
+        case 1:
+            return -1; //Keys.DOWN;
+        case 2:
+            return Keys.RIGHT;
+        }
+        throw new IllegalArgumentException("No key code specified for button number " + buttonNumber);
     }
     
     // FIXME Somehow this breaks when the screen height is much bigger than the screen width
