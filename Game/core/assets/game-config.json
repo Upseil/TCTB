@@ -15,7 +15,10 @@
         "cellMoveSpeed": 300,
         
         "slowMoThresholdFactor": 3,
-        "minSlowMoTimeScale": 0.15
+        "minSlowMoTimeScale": 0.15,
+        "timeScaleAlterationRate": 3,
+        "timeScaleIncreaseInterpolation": "Pow2In",
+        "timeScaleDecreaseInterpolation": "Pow2Out"
     },
     "HUD": {
         "padding": 10,

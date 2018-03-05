@@ -1,8 +1,10 @@
 package com.upseil.game;
 
+import com.badlogic.gdx.math.Interpolation;
 import com.upseil.gdx.artemis.config.SaveConfig;
 import com.upseil.gdx.config.AbstractConfig;
 import com.upseil.gdx.config.RawConfig;
+import com.upseil.gdx.math.BuiltInInterpolation;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.BorderBuilder;
 import com.upseil.gdx.scene2d.util.DividerBuilder;
@@ -58,6 +60,8 @@ public class GameConfig extends AbstractConfig {
             super(config);
         }
         
+        // Grid Structure -------------------------------------------------------------------------
+        
         public int getGridSize() {
             return getInt("gridSize");
         }
@@ -65,6 +69,8 @@ public class GameConfig extends AbstractConfig {
         public float getExclusionAreaSize() {
             return getFloat("exclusionAreaSize");
         }
+        
+        // Grid Layout ----------------------------------------------------------------------------
         
         public int getGridPadding() {
             return getInt("gridPadding");
@@ -81,6 +87,8 @@ public class GameConfig extends AbstractConfig {
         public float getSpacing() {
             return getFloat("spacing");
         }
+        
+        // Cell Removal/Movement ------------------------------------------------------------------
         
         public float getMaxRemovalDelay() {
             return getFloat("maxRemovalDelay");
@@ -102,12 +110,26 @@ public class GameConfig extends AbstractConfig {
             return getFloat("cellMoveSpeed");
         }
         
+        // Time Scaling ---------------------------------------------------------------------------
+        
         public float getSlowMoThresholdFactor() {
             return getFloat("slowMoThresholdFactor");
         }
         
         public float getMinSlowMoTimeScale() {
             return getFloat("minSlowMoTimeScale");
+        }
+        
+        public float getTimeScaleAlterationRate() {
+            return getFloat("timeScaleAlterationRate");
+        }
+        
+        public Interpolation getTimeScaleIncreaseInterpolation() {
+            return getEnum("timeScaleIncreaseInterpolation", BuiltInInterpolation.class).get();
+        }
+        
+        public Interpolation getTimeScaleDecreaseInterpolation() {
+            return getEnum("timeScaleDecreaseInterpolation", BuiltInInterpolation.class).get();
         }
         
     }

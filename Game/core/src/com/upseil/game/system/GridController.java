@@ -46,6 +46,8 @@ public class GridController extends BaseSystem {
     private float slowMoDistanceThreshold;
     private float minSlowMoTimeScale;
     private float timeScaleAlterationRate;
+    private Interpolation timeScaleIncreaseInterpolation;
+    private Interpolation timeScaleDecreaseInterpolation;
     private float loseEpsilon;
     
     private GridActor grid;
@@ -62,6 +64,7 @@ public class GridController extends BaseSystem {
     private float targetTimeScale;
     private float timeScaleAlterationDuration;
     private float timeScaleAlterationTime;
+    private Interpolation timeScaleInterpolation;
     
     @Override
     protected void initialize() {
@@ -71,8 +74,10 @@ public class GridController extends BaseSystem {
         config = gameConfig.getGridConfig();
         slowMoDistanceThreshold = (config.getCellSize() + config.getSpacing()) * config.getSlowMoThresholdFactor();
         minSlowMoTimeScale = config.getMinSlowMoTimeScale();
-        timeScaleAlterationRate = (1 - minSlowMoTimeScale) * 3;
-        loseEpsilon = MathUtils.FLOAT_ROUNDING_ERROR * 100;
+        timeScaleAlterationRate = (1 - minSlowMoTimeScale) * config.getTimeScaleAlterationRate();
+        timeScaleIncreaseInterpolation = config.getTimeScaleIncreaseInterpolation();
+        timeScaleDecreaseInterpolation = config.getTimeScaleDecreaseInterpolation();
+        loseEpsilon = 0.1f;
         
         float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing()) + 2 * config.getBorderSize();
         screenPadding = new PaddedScreen();
@@ -156,9 +161,8 @@ public class GridController extends BaseSystem {
         if (timeScaleAlterationTime < timeScaleAlterationDuration) {
             timeScaleAlterationTime += world.delta;
             float timeScaleAlpha = MathUtils.clamp(timeScaleAlterationTime / timeScaleAlterationDuration, 0, 1);
-            float timeScale = Interpolation.pow2Out.apply(startTimeScale, targetTimeScale, timeScaleAlpha);
+            float timeScale = timeScaleInterpolation.apply(startTimeScale, targetTimeScale, timeScaleAlpha);
             gridScene.setTimeScale(timeScale);
-//            System.out.println(String.format("Target %.2f, Current %.2f, Alpha %.4f", targetTimeScale, timeScale, timeScaleAlpha));
         }
     }
 
@@ -211,6 +215,8 @@ public class GridController extends BaseSystem {
         targetTimeScale = MathUtils.clamp(timeScale, minSlowMoTimeScale, 1);
         timeScaleAlterationDuration = Math.abs(startTimeScale - targetTimeScale) / timeScaleAlterationRate;
         timeScaleAlterationTime = 0;
+        timeScaleInterpolation = startTimeScale < targetTimeScale ? timeScaleIncreaseInterpolation
+                                                                  : timeScaleDecreaseInterpolation;
     }
 
     public void updateScreenSize() {
