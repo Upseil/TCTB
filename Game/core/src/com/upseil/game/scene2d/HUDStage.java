@@ -52,6 +52,7 @@ public class HUDStage extends Stage {
     private GameState gameState;
     
     private boolean updateValueLabels;
+    private boolean buttonsDisabled;
     
     public HUDStage(Viewport viewport, Batch batch, World world) {
         super(viewport, batch);
@@ -73,18 +74,11 @@ public class HUDStage extends Stage {
         container.pad(config.getPadding());
         
         buttons = new Button[3];
-
-        Button button0 = new Button(skin, "button0");
-        button0.addListener(new ButtonListener(this, gridController, Color.Color0, button0));
-        buttons[0] = button0;
-
-        Button button1 = new Button(skin, "button1");
-        button1.addListener(new ButtonListener(this, gridController, Color.Color1, button1));
-        buttons[1] = button1;
-
-        Button button2 = new Button(skin, "button2");
-        button2.addListener(new ButtonListener(this, gridController, Color.Color2, button2));
-        buttons[2] = button2;
+        for (int number = 0; number < Color.size(); number++) {
+            Button button = new Button(skin, text().append("button").append(number).toString());
+            button.addListener(new ButtonListener(this, gridController, Color.forNumber(number), button));
+            buttons[number] = button;
+        }
         
         container.add(createHeader()).padBottom(10).colspan(3).expandY().bottom();
 
@@ -94,13 +88,13 @@ public class HUDStage extends Stage {
         container.add();
 
         container.row();
-        container.add(button0).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).right();
+        container.add(buttons[0]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).right();
         container.add();
-        container.add(button2).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).left();
+        container.add(buttons[2]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).left();
         
         container.row();
         container.add();
-        container.add(button1).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).space(ButtonSpacing).top();
+        container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).space(ButtonSpacing).top();
         container.add();
         
         Image background = new Image(BackgroundBuilder.byColor(skin, "t-screen-background"));
@@ -184,26 +178,33 @@ public class HUDStage extends Stage {
         return text().append(TextColor.byName(color).asMarkup());
     }
 
-    // TODO Disable buttons if their color count is zero
-    public void setButtonsDisabled(boolean disabled) {
-        for (Button button : buttons) {
-            button.setDisabled(disabled);
+    @Override
+    public void act(float delta) {
+        gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
+        super.act(delta);
+        if (updateValueLabels) {
+            updateButtonsDisabled();
         }
+        updateValueLabels = false;
+    }
+
+    public void setButtonsDisabled(boolean buttonsDisabled) {
+        this.buttonsDisabled = buttonsDisabled;
+        updateButtonsDisabled();
     }
     
+    private void updateButtonsDisabled() {
+        for (int index = 0; index < buttons.length; index++) {
+            buttons[index].setDisabled(buttonsDisabled || gridController.getColorCount(index) <= 0);
+        }
+    }
+
     private boolean updateValueLabels() {
         return updateValueLabels;
     }
 
     public void setUpdateValueLabels(boolean updateValueLabels) {
         this.updateValueLabels = updateValueLabels;
-    }
-
-    @Override
-    public void act(float delta) {
-        gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
-        super.act(delta);
-        updateValueLabels = false;
     }
     
     public float getLeftWidth() {

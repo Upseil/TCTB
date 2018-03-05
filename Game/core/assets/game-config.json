@@ -16,7 +16,7 @@
         
         "slowMoThresholdFactor": 3,
         "minSlowMoTimeScale": 0.15,
-        "timeScaleAlterationRate": 3,
+        "timeScaleAlterationRate": 3.25,
         "timeScaleIncreaseInterpolation": "Pow2In",
         "timeScaleDecreaseInterpolation": "Pow2Out"
     },
