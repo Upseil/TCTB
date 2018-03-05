@@ -1,13 +1,19 @@
 package com.upseil.game.scene2d;
 
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 import static com.upseil.gdx.scene2d.util.Values.floatValue;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -27,6 +33,7 @@ import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.scene2d.SimpleKeyInputListener;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
 import com.upseil.gdx.scene2d.util.ValueLabelBuilder;
@@ -70,6 +77,8 @@ public class HUDStage extends Stage {
         });
         eventSystem.registerHandler(CellsAddedEvent.Type, e -> setUpdateValueLabels(true));
         
+        addListener(new KeyPressListener());
+        
         container = new Table(skin);
         container.setFillParent(true);
         container.pad(config.getPadding());
@@ -77,7 +86,7 @@ public class HUDStage extends Stage {
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
             Button button = new Button(skin, text().append("button").append(number).toString());
-            button.addListener(new ButtonListener(this, world, Color.forNumber(number), button, getKeyCode(number)));
+            button.addListener(new ButtonListener(this, gridController, Color.forNumber(number), button));
             buttons[number] = button;
         }
         
@@ -103,18 +112,6 @@ public class HUDStage extends Stage {
         addActor(background);
         addActor(container);
         updateValueLabels = true;
-    }
-    
-    private int getKeyCode(int buttonNumber) {
-        switch (buttonNumber) {
-        case 0:
-            return Keys.LEFT;
-        case 1:
-            return Keys.DOWN;
-        case 2:
-            return Keys.RIGHT;
-        }
-        throw new IllegalArgumentException("No key code specified for button number " + buttonNumber);
     }
     
     // FIXME Somehow this breaks when the screen height is much bigger than the screen width
@@ -238,6 +235,70 @@ public class HUDStage extends Stage {
     public float getBottomHeight() {
         container.validate();
         return container.getRowHeight(container.getRows() - 1) + container.getPadBottom();
+    }
+    
+    private class KeyPressListener extends SimpleKeyInputListener {
+        
+        private final Vector2 position = new Vector2();
+        private Button armedButton;
+        
+        @Override
+        public boolean keyDown(InputEvent event, int keyCode) {
+            if (keyCode == Keys.ESCAPE && armedButton != null) {
+                mouseMoved(Gdx.input.getX(), Gdx.input.getY());
+                armedButton = null;
+                return true;
+            }
+
+            boolean handled = false;
+            switch (keyCode) {
+            case Keys.LEFT:
+                armedButton = buttons[0];
+                break;
+            case Keys.DOWN:
+                armedButton = buttons[1];
+                break;
+            case Keys.RIGHT:
+                armedButton = buttons[2];
+                break;
+            default:
+                break;
+            }
+            if (armedButton != null) {
+                updatePosition();
+                mouseMoved((int) position.x, (int) position.y);
+                handled = true;
+            }
+            return handled;
+        }
+        
+        @Override
+        public boolean keyUp(InputEvent event, int keyCode) {
+            boolean handled = false;
+            if (armedButton != null && isKeyCodeValid(keyCode)) {
+                updatePosition();
+                int screenX = (int) position.x;
+                int screenY = (int) position.y;
+                touchDown(screenX, screenY, 0, Buttons.LEFT);
+                addAction(delay(0.1f, run(() -> {
+                    touchUp(screenX, screenY, 0, Buttons.LEFT);
+                    mouseMoved(Gdx.input.getX(), Gdx.input.getY());
+                })));
+                armedButton = null;
+                handled = true;
+            }
+            return handled;
+        }
+
+        private void updatePosition() {
+            position.set(armedButton.getWidth() / 2, armedButton.getHeight() / 2);
+            stageToScreenCoordinates(armedButton.localToStageCoordinates(position));
+        }
+
+        private boolean isKeyCodeValid(int keyCode) {
+            return keyCode == Keys.LEFT || keyCode == Keys.DOWN || keyCode == Keys.RIGHT;
+        }
+        
     }
     
 }
