@@ -77,7 +77,7 @@ public class HUDStage extends Stage {
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
             Button button = new Button(skin, text().append("button").append(number).toString());
-            button.addListener(new ButtonListener(this, gridController, Color.forNumber(number), button, getKeyCode(number)));
+            button.addListener(new ButtonListener(this, world, Color.forNumber(number), button, getKeyCode(number)));
             buttons[number] = button;
         }
         
@@ -110,7 +110,7 @@ public class HUDStage extends Stage {
         case 0:
             return Keys.LEFT;
         case 1:
-            return -1; //Keys.DOWN;
+            return Keys.DOWN;
         case 2:
             return Keys.RIGHT;
         }
