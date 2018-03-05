@@ -5,6 +5,7 @@ import static com.upseil.gdx.scene2d.util.Values.floatValue;
 import com.artemis.ComponentMapper;
 import com.artemis.World;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -25,6 +26,7 @@ import com.upseil.game.event.CellsAddedEvent;
 import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.system.EventSystem;
+import com.upseil.gdx.artemis.system.SimpleKeyTypedListener;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.scene2d.util.TextColor;
@@ -102,6 +104,25 @@ public class HUDStage extends Stage {
         addActor(background);
         addActor(container);
         updateValueLabels = true;
+        
+        addListener(new SimpleKeyTypedListener(event -> {
+            int buttonIndex = -1;
+            switch (event.getKeyCode()) {
+            case Keys.LEFT:
+                buttonIndex = 0;
+                break;
+            case Keys.DOWN:
+                buttonIndex = 1;
+                break;
+            case Keys.RIGHT:
+                buttonIndex = 2;
+                break;
+            }
+            if (buttonIndex != -1) {
+                buttons[buttonIndex].toggle();
+            }
+            return buttonIndex != -1;
+        }));
     }
     
     // FIXME Somehow this breaks when the screen height is much bigger than the screen width
