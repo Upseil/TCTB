@@ -10,7 +10,6 @@ import com.upseil.game.system.GridController;
 
 @Wire
 public class ButtonListener extends ClickListener {
-    
 
     private final HUDStage stage;
     private final GridController gridController;

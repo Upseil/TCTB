@@ -27,7 +27,7 @@ import com.upseil.gdx.gwt.util.BrowserConsoleLogger;
 
 public class HtmlLauncher extends GwtApplication {
     
-    private static final String GameTitle = "Three Colors - Three Buttons";
+    private static final String GameTitle = "Stay Colorful";
 
     public interface SavegameMapper extends ObjectMapper<Savegame> { }
     

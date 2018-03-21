@@ -1,5 +1,6 @@
 package com.upseil.game.desktop;
 
+import com.badlogic.gdx.Files;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.upseil.game.GameApplication;
@@ -11,7 +12,10 @@ public class DesktopLauncher {
     
     public static void main(String[] args) {
         LwjglApplicationConfiguration configuration = new LwjglApplicationConfiguration();
-        configuration.title = "Three Colors - Three Buttons";
+        configuration.title = "Stay Colorful";
+        configuration.addIcon("icon/icon-128.png", Files.FileType.Internal);
+        configuration.addIcon("icon/icon-32.png", Files.FileType.Internal);
+        configuration.addIcon("icon/icon-16.png", Files.FileType.Internal);
         configuration.width = 1000;
         configuration.height = 1000;
         
