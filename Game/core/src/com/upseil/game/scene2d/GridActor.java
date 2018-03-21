@@ -34,7 +34,6 @@ import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.pool.PooledPools;
 import com.upseil.gdx.pool.pair.PairPool;
 import com.upseil.gdx.pool.pair.PooledPair;
-import com.upseil.gdx.scene2d.PolygonActor;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
 
@@ -46,7 +45,7 @@ public class GridActor extends Group {
     private final ExtendedRandom random;
     
     private final Group borderGroup;
-    private final EnumMap<Direction, Actor> borders;
+    private final EnumMap<Direction, BorderActor> borders;
     
     private final Group cellGroup;
     private final CellActor[][] cells;
@@ -103,33 +102,18 @@ public class GridActor extends Group {
         float worldWidth = getWorldWidth();
         float borderSize = style.borderSize;
         
-        float[] vertices = new float[] { 0,worldHeight,  borderSize,worldHeight-borderSize,  worldWidth-borderSize,worldHeight-borderSize,  worldWidth,worldHeight };
-        Actor topBorder = new PolygonActor(vertices);
-        topBorder.setColor(skin.getColor(Color.Black.getName()));
-        topBorder.setPosition(0, worldHeight - borderSize);
-        borderGroup.addActor(topBorder);
-        borders.put(Direction.Top, topBorder);
-        
-        vertices = new float[] { 0,worldHeight,  0,0,  borderSize,borderSize,  borderSize,worldHeight-borderSize };
-        Actor leftBorder = new PolygonActor(vertices);
-        leftBorder.setPosition(0, 0);
-        leftBorder.setColor(skin.getColor(Color.White.getName()));
-        borderGroup.addActor(leftBorder);
-        borders.put(Direction.Left, leftBorder);
-        
-        vertices = new float[] { borderSize,borderSize,  0,0,  worldWidth,0,  worldWidth-borderSize,borderSize };
-        Actor bottomBorder = new PolygonActor(vertices);
-        bottomBorder.setPosition(0, 0);
-        bottomBorder.setColor(skin.getColor(Color.Black.getName()));
-        borderGroup.addActor(bottomBorder);
-        borders.put(Direction.Bottom, bottomBorder);
-        
-        vertices = new float[] { worldWidth-borderSize,worldHeight-borderSize,  worldWidth-borderSize,borderSize,  worldWidth,0,  worldWidth,worldHeight };
-        Actor rightBorder = new PolygonActor(vertices);
-        rightBorder.setPosition(worldWidth - borderSize, 0);
-        rightBorder.setColor(skin.getColor(Color.White.getName()));
-        borderGroup.addActor(rightBorder);
-        borders.put(Direction.Right, rightBorder);
+        Color borderColor = Color.Black;
+        for (Direction direction : Direction.values()) {
+            BorderActor actor = new BorderActor(skin, direction, worldWidth, worldHeight, borderSize);
+            actor.setBorderColor(borderColor);
+            borderGroup.addActor(actor);
+            borders.put(direction, actor);
+            if (borderColor == Color.Black) {
+                borderColor = Color.White;
+            } else {
+                borderColor = Color.Black;
+            }
+        }
     }
 
     private void initializeGrid(float exclusionAreaSize) {
@@ -317,13 +301,13 @@ public class GridActor extends Group {
         if (whiteY == getGridHeight() - 1) changeableBorders.removeValue(Direction.Top, true);
         
         // Shuffling the colors of the changeable borders
-        com.badlogic.gdx.graphics.Color[] borderColors = new com.badlogic.gdx.graphics.Color[changeableBorders.size];
+        Color[] borderColors = new Color[changeableBorders.size];
         for (int index = 0; index < borderColors.length; index++) {
-            borderColors[index] = borders.get(changeableBorders.items[index]).getColor().cpy();
+            borderColors[index] = borders.get(changeableBorders.items[index]).getBorderColor();
         }
         GDXArrays.shuffle(borderColors);
         for (int index = 0; index < borderColors.length; index++) {
-            borders.get(changeableBorders.items[index]).setColor(borderColors[index]);
+            borders.get(changeableBorders.items[index]).setBorderColor(borderColors[index]);
         }
     }
     
@@ -387,7 +371,6 @@ public class GridActor extends Group {
         }
     }
 
-    // FIXME Border distance calculation seems broken
     private void updateMinBlackWhiteDistance() {
         float blackCenterX = blackCell.getX(Align.center);
         float blackCenterY = blackCell.getY(Align.center);
