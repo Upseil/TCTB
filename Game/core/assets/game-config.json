@@ -13,6 +13,8 @@
         "removalMoveAmount": 150,
         "removalScaleTo": 0.25,
         "cellMoveSpeed": 300,
+        "teleportMoveSpeed": 100,
+        "teleportDelay": 0.25,
         
         "slowMoThresholdFactor": 3,
         "minSlowMoTimeScale": 0.15,

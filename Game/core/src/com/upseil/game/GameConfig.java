@@ -110,6 +110,14 @@ public class GameConfig extends AbstractConfig {
             return getFloat("cellMoveSpeed");
         }
         
+        public float getTeleportMoveSpeed() {
+            return getFloat("teleportMoveSpeed");
+        }
+        
+        public float getTeleportDelay() {
+            return getFloat("teleportDelay");
+        }
+        
         // Time Scaling ---------------------------------------------------------------------------
         
         public float getSlowMoThresholdFactor() {
