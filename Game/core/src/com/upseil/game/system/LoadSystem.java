@@ -3,7 +3,7 @@ package com.upseil.game.system;
 import com.upseil.game.Savegame;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
-import com.upseil.gdx.artemis.config.SaveConfig;
+import com.upseil.gdx.artemis.ArtemisConfigs.SaveConfig;
 import com.upseil.gdx.artemis.system.AbstractLoadSystem;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.serialization.Reader;

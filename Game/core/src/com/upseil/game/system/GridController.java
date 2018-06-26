@@ -1,5 +1,7 @@
 package com.upseil.game.system;
 
+import static com.upseil.game.Config.GridConfigValues.*;
+
 import com.artemis.BaseSystem;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
@@ -12,9 +14,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
 import com.badlogic.gdx.utils.Scaling;
+import com.upseil.game.Config.GameConfig;
+import com.upseil.game.Config.GridConfig;
 import com.upseil.game.GameApplication;
-import com.upseil.game.GameConfig;
-import com.upseil.game.GameConfig.GridConfig;
 import com.upseil.game.Layers;
 import com.upseil.game.Tag;
 import com.upseil.game.domain.Color;
@@ -28,6 +30,7 @@ import com.upseil.gdx.artemis.event.ResizeEvent;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
 import com.upseil.gdx.artemis.system.TagManager;
+import com.upseil.gdx.math.BuiltInInterpolation;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 import com.upseil.gdx.viewport.PaddedScreen;
 import com.upseil.gdx.viewport.PartialScalingViewport;
@@ -72,14 +75,14 @@ public class GridController extends BaseSystem {
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getGridConfig();
-        slowMoDistanceThreshold = (config.getCellSize() + config.getSpacing()) * config.getSlowMoThresholdFactor();
-        minSlowMoTimeScale = config.getMinSlowMoTimeScale();
-        timeScaleAlterationRate = (1 - minSlowMoTimeScale) * config.getTimeScaleAlterationRate();
-        timeScaleIncreaseInterpolation = config.getTimeScaleIncreaseInterpolation();
-        timeScaleDecreaseInterpolation = config.getTimeScaleDecreaseInterpolation();
+        slowMoDistanceThreshold = (config.getFloat(CellSize) + config.getFloat(Spacing)) * config.getFloat(SlowMoThresholdFactor);
+        minSlowMoTimeScale = config.getFloat(MinSlowMoTimeScale);
+        timeScaleAlterationRate = (1 - minSlowMoTimeScale) * config.getFloat(TimeScaleAlterationRate);
+        timeScaleIncreaseInterpolation = config.getEnum(TimeScaleIncreaseInterpolation, BuiltInInterpolation.class).get();
+        timeScaleDecreaseInterpolation = config.getEnum(TimeScaleDecreaseInterpolation, BuiltInInterpolation.class).get();
         loseEpsilon = 0.1f;
         
-        float worldSize = config.getGridSize() * (config.getCellSize() + config.getSpacing()) + 2 * config.getBorderSize();
+        float worldSize = config.getFloat(GridSize) * (config.getFloat(CellSize) + config.getFloat(Spacing)) + 2 * config.getFloat(BorderSize);
         screenPadding = new PaddedScreen();
         PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
         Stage gridStage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
@@ -90,7 +93,7 @@ public class GridController extends BaseSystem {
         gridEdit.create(InputHandler.class).setProcessor(gridStage);
         gridScene = gridEdit.create(Scene.class).initialize(gridStage);
 
-        grid = new GridActor(world, GameApplication.Random, config.getExclusionAreaSize());
+        grid = new GridActor(world, GameApplication.Random, config.getFloat(ExclusionAreaSize));
         gridEdit.create(ActorComponent.class).set(grid);
         gridScene.addActor(grid);
 
@@ -123,7 +126,7 @@ public class GridController extends BaseSystem {
         if (resetGrid) {
             setTimeScale(1);
             GameApplication.HUD.setButtonsDisabled(false);
-            grid.reset(config.getExclusionAreaSize());
+            grid.reset(config.getFloat(ExclusionAreaSize));
             resetGrid = false;
         }
         
@@ -220,7 +223,7 @@ public class GridController extends BaseSystem {
     }
 
     public void updateScreenSize() {
-        int padding = config.getGridPadding();
+        int padding = config.getInt(GridPadding);
         int top = Math.round(GameApplication.HUD.getTopHeight()) + padding;
         int left = Math.round(GameApplication.HUD.getLeftWidth()) + padding;
         int bottom = Math.round(GameApplication.HUD.getBottomHeight()) + padding;

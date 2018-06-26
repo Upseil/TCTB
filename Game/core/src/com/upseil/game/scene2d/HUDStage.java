@@ -3,6 +3,7 @@ package com.upseil.game.scene2d;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 import static com.upseil.gdx.scene2d.util.Values.floatValue;
+import static com.upseil.game.Config.HUDConfigValues.*;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
@@ -23,8 +24,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.upseil.game.GameConfig;
-import com.upseil.game.GameConfig.HUDConfig;
+import com.upseil.game.Config.GameConfig;
+import com.upseil.game.Config.HUDConfig;
 import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
@@ -68,7 +69,7 @@ public class HUDStage extends Stage {
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getHUDConfig();
-        buttonRatio = config.getButtonRatio();
+        buttonRatio = config.getFloat(ButtonRatio);
         
         EventSystem eventSystem = world.getSystem(EventSystem.class);
         eventSystem.registerHandler(CellsRemovedEvent.Type, event -> {
@@ -81,7 +82,7 @@ public class HUDStage extends Stage {
         
         container = new Table(skin);
         container.setFillParent(true);
-        container.pad(config.getPadding());
+        container.pad(config.getFloat(Padding));
         
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
@@ -107,9 +108,6 @@ public class HUDStage extends Stage {
         container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).space(ButtonSpacing).top();
         container.add();
         
-        Image background = new Image(BackgroundBuilder.byColor(skin, "t-screen-background"));
-        background.setFillParent(true);
-        addActor(background);
         addActor(container);
         updateValueLabels = true;
     }
@@ -136,7 +134,7 @@ public class HUDStage extends Stage {
 
     private Table createCellCounters() {
         float spacing = 5;
-        float counterSize = config.getCounterSize();
+        float counterSize = config.getFloat(CounterSize);
         int expectedColorCount = gridController.getExpectedColorCount();
         StringBuilder dummyText = text().append('0'); // One more than expected
         do {

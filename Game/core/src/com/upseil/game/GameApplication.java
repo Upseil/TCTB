@@ -5,10 +5,12 @@ import com.artemis.WorldConfiguration;
 import com.artemis.WorldConfigurationBuilder;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Colors;
 import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
+import com.upseil.game.Config.GameConfig;
 import com.upseil.game.scene2d.HUDStage;
 import com.upseil.game.system.GameInitializer;
 import com.upseil.game.system.GridController;
@@ -79,7 +81,7 @@ public class GameApplication extends ArtemisApplicationAdapter {
                 .with(new SaveSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))
                 
                 .with(new LayeredInputSystem())
-                .with(new ClearScreenSystem())
+                .with(new ClearScreenSystem(Colors.get("t-screen-background")))
                 .with(new LayeredSceneRenderSystem<>(new PolygonSpriteBatch(1000, shader)))
 
                 .with(new EventSystem())

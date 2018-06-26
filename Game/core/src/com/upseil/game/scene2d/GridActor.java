@@ -6,6 +6,7 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
+import static com.upseil.game.Config.GridConfigValues.*;
 
 import java.util.Iterator;
 
@@ -22,9 +23,10 @@ import com.badlogic.gdx.utils.ObjectFloatMap;
 import com.badlogic.gdx.utils.ObjectFloatMap.Entries;
 import com.badlogic.gdx.utils.ObjectFloatMap.Entry;
 import com.badlogic.gdx.utils.ObjectSet;
+import com.upseil.game.Config.GameConfig;
+import com.upseil.game.Config.GridConfig;
+import com.upseil.game.Config.GridConfigValues;
 import com.upseil.game.GameApplication;
-import com.upseil.game.GameConfig;
-import com.upseil.game.GameConfig.GridConfig;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.event.CellsAddedEvent;
@@ -69,7 +71,7 @@ public class GridActor extends Group {
         this.style = new GridStyle(config);
         this.random = random;
         
-        int size = config.getGridSize();
+        int size = config.getInt(GridConfigValues.GridSize);
         float worldSize = size * style.paddedCellSize + 2 * style.borderSize;
         int expectedColorCount = (size * size) / Color.size();
         
@@ -88,7 +90,7 @@ public class GridActor extends Group {
         cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
         
         movementPool = new PairPool<>();
-        cellMovements = new Array<>(false, config.getGridSize(), PooledPair.class);
+        cellMovements = new Array<>(false, size, PooledPair.class);
         newCells = new Array<>(false, expectedColorCount, CellActor.class);
         
         initializeGrid(exclusionAreaSize);
@@ -624,9 +626,9 @@ public class GridActor extends Group {
         public final float removalScaleTo;
         
         public GridStyle(GridConfig config) {
-            this(config.getBorderSize(), config.getCellSize(), config.getSpacing(), config.getCellMoveSpeed(),
-                 config.getTeleportMoveSpeed(), config.getTeleportDelay(), config.getMaxRemovalDelay(),
-                 config.getRemovalDuration(), config.getRemovalMoveAmount(), config.getRemovalScaleTo());
+            this(config.getFloat(BorderSize), config.getFloat(CellSize), config.getFloat(Spacing), config.getFloat(CellMoveSpeed),
+                 config.getFloat(TeleportMoveSpeed), config.getFloat(TeleportDelay), config.getFloat(MaxRemovalDelay),
+                 config.getFloat(RemovalDuration), config.getFloat(RemovalMoveAmount), config.getFloat(RemovalScaleTo));
         }
 
         public GridStyle(float borderSize, float cellSize, float spacing, float cellMoveSpeed, float teleportMoveSpeed, float teleportDelay,
