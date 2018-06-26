@@ -1,5 +1,5 @@
 package com.upseil.game;
 
 public enum Tag {
-    GameState, Grid
+    GameState, Grid, HUD, Menu
 }

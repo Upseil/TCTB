@@ -3,6 +3,7 @@ package com.upseil.game.system;
 import static com.upseil.game.Config.GridConfigValues.*;
 
 import com.artemis.BaseSystem;
+import com.artemis.ComponentMapper;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
@@ -22,7 +23,9 @@ import com.upseil.game.Tag;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.scene2d.GridActor;
+import com.upseil.game.scene2d.HUDStage;
 import com.upseil.gdx.artemis.component.ActorComponent;
+import com.upseil.gdx.artemis.component.Ignore;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
 import com.upseil.gdx.artemis.component.Scene;
@@ -40,6 +43,7 @@ public class GridController extends BaseSystem {
     
     private TagManager<Tag> tagManager;
     private LayeredSceneRenderSystem<?> renderSystem;
+    private ComponentMapper<Scene> sceneMapper;
 
     @Wire(name="Skin") private Skin skin;
     private GridConfig config;
@@ -89,6 +93,7 @@ public class GridController extends BaseSystem {
         
         Entity gridEntity = world.createEntity();
         EntityEdit gridEdit = gridEntity.edit();
+        gridEdit.create(Ignore.class);
         gridEdit.create(Layer.class).setZIndex(Layers.World.getZIndex());
         gridEdit.create(InputHandler.class).setProcessor(gridStage);
         gridScene = gridEdit.create(Scene.class).initialize(gridStage);
@@ -125,7 +130,7 @@ public class GridController extends BaseSystem {
         
         if (resetGrid) {
             setTimeScale(1);
-            GameApplication.HUD.setButtonsDisabled(false);
+            getHUD().setButtonsDisabled(false);
             grid.reset(config.getFloat(ExclusionAreaSize));
             resetGrid = false;
         }
@@ -142,7 +147,7 @@ public class GridController extends BaseSystem {
             if (!grid.isMovementInProgress()) {
                 if (!lost) {
                     grid.randomizeBorderColors();
-                    GameApplication.HUD.setButtonsDisabled(false);
+                    getHUD().setButtonsDisabled(false);
                 }
                 setTimeScale(1);
                 blackWhiteDistance = -1;
@@ -223,11 +228,13 @@ public class GridController extends BaseSystem {
     }
 
     public void updateScreenSize() {
+        HUDStage hud = getHUD();
+        
         int padding = config.getInt(GridPadding);
-        int top = Math.round(GameApplication.HUD.getTopHeight()) + padding;
-        int left = Math.round(GameApplication.HUD.getLeftWidth()) + padding;
-        int bottom = Math.round(GameApplication.HUD.getBottomHeight()) + padding;
-        int right = Math.round(GameApplication.HUD.getRightWidth()) + padding;
+        int top = Math.round(hud.getTopHeight()) + padding;
+        int left = Math.round(hud.getLeftWidth()) + padding;
+        int bottom = Math.round(hud.getBottomHeight()) + padding;
+        int right = Math.round(hud.getRightWidth()) + padding;
         
         screenPadding.pad(top, left, bottom, right);
         gridScene.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -263,6 +270,10 @@ public class GridController extends BaseSystem {
 
     public void remove(Color color) {
         colorToRemove = color;
+    }
+    
+    private HUDStage getHUD() {
+        return (HUDStage) sceneMapper.get(tagManager.getEntityId(Tag.HUD)).getStage();
     }
     
 }

@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.Config.GameConfig;
-import com.upseil.game.scene2d.HUDStage;
 import com.upseil.game.system.GameInitializer;
 import com.upseil.game.system.GridController;
 import com.upseil.game.system.LoadSystem;
@@ -32,7 +31,6 @@ import com.upseil.gdx.scene2d.util.DividerBuilder;
 public class GameApplication extends ArtemisApplicationAdapter {
 
     public static final ExtendedRandom Random = new ExtendedRandomXS128();
-    public static HUDStage HUD;
     
     private final SerializationContext serializationContext;
     
