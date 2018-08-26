@@ -6,12 +6,22 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.scaleTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
-import static com.upseil.game.Config.GridConfigValues.*;
+import static com.upseil.game.Config.GridConfigValues.BorderSize;
+import static com.upseil.game.Config.GridConfigValues.CellMoveSpeed;
+import static com.upseil.game.Config.GridConfigValues.CellSize;
+import static com.upseil.game.Config.GridConfigValues.MaxRemovalDelay;
+import static com.upseil.game.Config.GridConfigValues.RemovalDuration;
+import static com.upseil.game.Config.GridConfigValues.RemovalMoveAmount;
+import static com.upseil.game.Config.GridConfigValues.RemovalScaleTo;
+import static com.upseil.game.Config.GridConfigValues.Spacing;
+import static com.upseil.game.Config.GridConfigValues.TeleportDelay;
+import static com.upseil.game.Config.GridConfigValues.TeleportMoveSpeed;
 
 import java.util.Iterator;
 
 import com.artemis.World;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -30,6 +40,7 @@ import com.upseil.game.GameApplication;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.event.CellsAddedEvent;
+import com.upseil.game.event.CellsChangedEvent;
 import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.math.ExtendedRandom;
@@ -55,8 +66,9 @@ public class GridActor extends Group {
     private ObjectFloatMap<CellActor> cellRemovalDelays;
     
     private final PairPool<CellActor, MoveToAction> movementPool;
-    private final Array<PooledPair<CellActor, MoveToAction>> cellMovements;
+    private final Array<PooledPair<CellActor, MoveToAction>> queuedMovements;
     private final Array<CellActor> newCells;
+    private boolean movementInProgress;
     
     private CellActor blackCell;
     private CellActor whiteCell;
@@ -90,7 +102,7 @@ public class GridActor extends Group {
         cellRemovalDelays = new ObjectFloatMap<>(expectedColorCount);
         
         movementPool = new PairPool<>();
-        cellMovements = new Array<>(false, size, PooledPair.class);
+        queuedMovements = new Array<>(false, size, PooledPair.class);
         newCells = new Array<>(false, expectedColorCount, CellActor.class);
         
         initializeGrid(exclusionAreaSize);
@@ -213,7 +225,7 @@ public class GridActor extends Group {
             }
             // Non-empty cell with initialized new position -> queue movement
             if (cell != null && newX >= 0 && newY >= 0) {
-                cellMovements.add(createLinearMoveToAction(cell, toWorld(newX), toWorld(newY)));
+                queuedMovements.add(createLinearMoveToAction(cell, toWorld(newX), toWorld(newY)));
                 cells[x][y] = null;
                 cells[newX][newY] = cell;
                 newX += context.incrementX();
@@ -248,7 +260,7 @@ public class GridActor extends Group {
             CellActor newCell = createCell(spawnX, spawnY, Color.random(random.asRandom()));
             cells[gridX][gridY] = newCell;
             newCells.add(newCell);
-            cellMovements.add(createLinearMoveToAction(newCell, toWorld(gridX), toWorld(gridY)));
+            queuedMovements.add(createLinearMoveToAction(newCell, toWorld(gridX), toWorld(gridY)));
 
             gridX += context.incrementX();
             gridY += context.incrementY();
@@ -266,24 +278,25 @@ public class GridActor extends Group {
     
     private void applyQueuedMovements(FillGridContext context) {
         float delay = 0;
-        PooledPair<CellActor, MoveToAction>[] movements = cellMovements.items;
+        PooledPair<CellActor, MoveToAction>[] movements = queuedMovements.items;
         // Iterating over the queued movements backwards, accumulating the
         // needed time for the previous cell to reach the current cell.
         // This looks like cells are "pushed" by their predecessor.
-        for (int index = cellMovements.size - 1; index >= 0; index--) {
+        for (int index = queuedMovements.size - 1; index >= 0; index--) {
             CellActor movingCell = movements[index].getA();
             MoveToAction moveAction = movements[index].getB();
-            if (index < cellMovements.size - 1) {
+            if (index < queuedMovements.size - 1) {
                 CellActor previousCell = movements[index + 1].getA();
                 delay += (context.calculateDistance(movingCell, previousCell) - (style.cellOffset * 2)) / style.cellMoveSpeed;
             }
             movingCell.addAction(delay(delay, moveAction));
         }
         
-        for (PooledPair<CellActor, MoveToAction> movement : cellMovements) {
+        for (PooledPair<CellActor, MoveToAction> movement : queuedMovements) {
             movement.free();
         }
-        cellMovements.clear();
+        queuedMovements.clear();
+        movementInProgress = true;
     }
 
     public void randomizeBorderColors() {
@@ -317,12 +330,49 @@ public class GridActor extends Group {
     }
     
     public void abortMovement() {
-        for (int x = 0; x < getGridWidth(); x++) {
-            for (int y = 0; y < getGridHeight(); y++) {
-                cells[x][y].clearActions();
-            }
+        if (!isMovementInProgress()) {
+            return;
+        }
+        
+        for (ObjectSet<CellActor> cells : cellsByColor) {
+            cells.clear();
         }
         newCells.clear();
+        teleportEnabled = false;
+        
+        Array<CellActor> cellsToStop = new Array<>(getGridWidth() * getGridHeight());
+        for (int x = 0; x < getGridWidth(); x++) {
+            for (int y = 0; y < getGridHeight(); y++) {
+                CellActor cell = cells[x][y];
+                if (cell != null && cell.getActions().size > 0) {
+                    cellsToStop.add(cell);
+                    cells[x][y] = null;
+                }
+            }
+        }
+        
+        boolean cellsWereRemoved = false;
+        for (CellActor cell : cellsToStop) {
+            int x = toGrid(cell.getX());
+            int y = toGrid(cell.getY());
+            float targetX = toWorld(x);
+            float targetY = toWorld(y);
+            float duration = Math.max(Math.abs(cell.getX() - targetX), Math.abs(cell.getY() - targetY)) / style.cellMoveSpeed;
+            Action action = moveTo(targetX, targetY, duration);
+            
+            if (isInsideGrid(x, y)) {
+                setCell(x, y, cell);
+            } else {
+                action = sequence(action, Actions.removeActor());
+                cellsWereRemoved = true;
+            }
+            cell.clearActions();
+            cell.addAction(action);
+        }
+
+        if (cellsWereRemoved) {
+            EventSystem.schedule(world, PooledPools.obtain(CellsChangedEvent.class));
+        }
     }
     
     public void reset(float exclusionAreaSize) {
@@ -331,7 +381,7 @@ public class GridActor extends Group {
         }
         GDXArrays.clear(cells);
         cellRemovalDelays.clear();
-        cellMovements.clear();
+        queuedMovements.clear();
         newCells.clear();
         cellGroup.clear();
         initializeGrid(exclusionAreaSize);
@@ -342,6 +392,18 @@ public class GridActor extends Group {
     @Override
     public void act(float delta) {
         super.act(delta);
+        boolean movementStopped = false;
+        if (movementInProgress) {
+            movementInProgress = false;
+            for (Actor actor : cellGroup.getChildren()) {
+                if (actor.getActions().size > 0) {
+                    movementInProgress = true;
+                    break;
+                }
+            }
+            movementStopped = !movementInProgress;
+        }
+        
         if (isRemovalInProgress()) {
             processCellRemovalDelays(delta);
         }
@@ -350,10 +412,11 @@ public class GridActor extends Group {
         }
         if (isMovementInProgress()) {
             processNewCells();
-            if (!isMovementInProgress() && teleportEnabled) {
-                checkTeleportation(whiteCell);
-                checkTeleportation(blackCell);
-            }
+        }
+
+        if (movementStopped && teleportEnabled) {
+            checkTeleportation(whiteCell);
+            checkTeleportation(blackCell);
         }
     }
 
@@ -525,6 +588,7 @@ public class GridActor extends Group {
             blackCell = newCell;
         }
         teleportEnabled = false;
+        movementInProgress = true;
     }
     
     private void shiftLine(int number, Direction direction, float movementSpeed, float delay) {
@@ -557,6 +621,10 @@ public class GridActor extends Group {
                cellY >= style.borderSize + style.cellOffset &&
                cellMaxX <= getWorldWidth() - style.borderSize - style.cellOffset &&
                cellMaxY <= getWorldHeight() - style.borderSize - style.cellOffset;
+    }
+    
+    public boolean isInsideGrid(int gridX, int gridY) {
+        return gridX >= 0 && gridX < getGridWidth() && gridY >= 0 && gridY < getGridHeight();
     }
     
     public float getMinBlackWhiteDistance() {
@@ -600,7 +668,7 @@ public class GridActor extends Group {
     }
     
     public boolean isMovementInProgress() {
-        return newCells.size > 0;
+        return movementInProgress;
     }
     
     public GridStyle getStyle() {

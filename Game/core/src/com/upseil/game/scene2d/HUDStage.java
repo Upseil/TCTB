@@ -2,8 +2,10 @@ package com.upseil.game.scene2d;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
+import static com.upseil.game.Config.HUDConfigValues.ButtonRatio;
+import static com.upseil.game.Config.HUDConfigValues.CounterSize;
+import static com.upseil.game.Config.HUDConfigValues.Padding;
 import static com.upseil.gdx.scene2d.util.Values.floatValue;
-import static com.upseil.game.Config.HUDConfigValues.*;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
@@ -30,6 +32,7 @@ import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
 import com.upseil.game.event.CellsAddedEvent;
+import com.upseil.game.event.CellsChangedEvent;
 import com.upseil.game.event.CellsRemovedEvent;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.system.EventSystem;
@@ -77,6 +80,7 @@ public class HUDStage extends Stage {
             setUpdateValueLabels(true);
         });
         eventSystem.registerHandler(CellsAddedEvent.Type, e -> setUpdateValueLabels(true));
+        eventSystem.registerHandler(CellsChangedEvent.Type, e -> setUpdateValueLabels(true));
         
         addListener(new KeyPressListener());
         

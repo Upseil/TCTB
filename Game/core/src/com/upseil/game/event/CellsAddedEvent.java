@@ -5,7 +5,7 @@ import com.upseil.gdx.event.EventType;
 
 public class CellsAddedEvent extends AbstractEvent<CellsAddedEvent> {
     
-    public static EventType<CellsAddedEvent> Type = new EventType<>("Cells Added");
+    public static final EventType<CellsAddedEvent> Type = new EventType<>("Cells Added");
     
     private int count;
 

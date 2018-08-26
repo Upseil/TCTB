@@ -5,7 +5,7 @@ import com.upseil.gdx.event.EventType;
 
 public class CellsRemovedEvent extends AbstractEvent<CellsRemovedEvent> {
     
-    public static EventType<CellsRemovedEvent> Type = new EventType<>("Cells Removed");
+    public static final EventType<CellsRemovedEvent> Type = new EventType<>("Cells Removed");
     
     private int count;
 
