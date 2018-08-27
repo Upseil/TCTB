@@ -1,5 +1,21 @@
 // Game Parent
 
+buildscript {
+    ext {
+        gdxTarget = '1.9.8'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        jcenter()
+    }
+    dependencies {
+        classpath "com.badlogicgames.gdx:gdx-tools:$gdxTarget"
+    }
+}
+
 ext {
     workingTitle = "TCTB"
 	
@@ -48,6 +64,17 @@ task testCoverage(type: JacocoReport, group:'verification') {
 		csv.enabled false
     }
 }
+
+import com.badlogic.gdx.tools.texturepacker.TexturePacker
+task packAndDeployTitle (group: 'Asset') {
+    description = 'Packs the title and deploys it to the game assets.'
+    doLast {
+        String rawTitleFolder = '../assets/title'
+        String assetTitleFolder = './core/assets/title'
+        TexturePacker.process(rawTitleFolder, assetTitleFolder, 'title')
+    }
+}
+
 
 // UpseilGDX Tooling
 
