@@ -3,7 +3,7 @@
 		default:      {file: vis-open-sans-21.fnt},
 		default-bold: {file: vis-open-sans-21_bold.fnt},
 		
-		big: {file: vis-open-sans-28.fnt}
+		big: {file: vis-open-sans-48.fnt}
 	},
 	com.badlogic.gdx.graphics.Color: {
 		a0:   {hex: #00000000},
@@ -74,7 +74,23 @@
 		background-t-color0 : {name: t-dot, color: t-color0},
 		background-t-color1 : {name: t-dot, color: t-color1},
 		background-t-color2 : {name: t-dot, color: t-color2}
-	}
+	},
+	com.upseil.gdx.scene2d.util.CompoundDrawable: {
+		menu-button0:          {drawables: [button0-up,       menu-button-border]},
+		menu-button0-down:     {drawables: [button0-down,     menu-button-border]},
+		menu-button0-over:     {drawables: [button0-over,     menu-button-border]},
+		menu-button0-disabled: {drawables: [button0-disabled, menu-button-border]},
+		
+		menu-button1:          {drawables: [button1-up,       menu-button-border]},
+		menu-button1-down:     {drawables: [button1-down,     menu-button-border]},
+		menu-button1-over:     {drawables: [button1-over,     menu-button-border]},
+		menu-button1-disabled: {drawables: [button1-disabled, menu-button-border]},
+		
+		menu-button2:          {drawables: [button2-up,       menu-button-border]},
+		menu-button2-down:     {drawables: [button2-down,     menu-button-border]},
+		menu-button2-over:     {drawables: [button2-over,     menu-button-border]},
+		menu-button2-disabled: {drawables: [button2-disabled, menu-button-border]}
+	},
 	
 	com.badlogic.gdx.scenes.scene2d.ui.Button$ButtonStyle: {
 		default: {down: button-down, up: button, over: button-over},
@@ -86,7 +102,14 @@
 	com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle: {
 		default: {up: button, down: button-down, over: button-over, disabled: button, font: default, fontColor: white, disabledFontColor: t-disabled},
 		big:     {up: button, down: button-down, over: button-over, disabled: button, font: big, fontColor: white, disabledFontColor: t-disabled},
-		toggle:  {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: t-disabled}
+		toggle:  {up: button, down: button-down, over: button-over, disabled: button, checked: button-down, font: default, fontColor: white, disabledFontColor: t-disabled},
+		
+		menu0: {up: menu-button0, down: menu-button0-down, over: menu-button0-over, disabled: menu-button0-disabled,
+		        font: big, fontColor: black, disabledFontColor: t-disabled},
+		menu1: {up: menu-button1, down: menu-button1-down, over: menu-button1-over, disabled: menu-button1-disabled,
+		        font: big, fontColor: black, disabledFontColor: t-disabled},
+		menu2: {up: menu-button2, down: menu-button2-down, over: menu-button2-over, disabled: menu-button2-disabled,
+		        font: big, fontColor: black, disabledFontColor: t-disabled}
 	},
 	com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle: {
 		default: {up: button, down: button-down, over: button-over}

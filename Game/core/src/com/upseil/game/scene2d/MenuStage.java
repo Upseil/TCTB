@@ -3,10 +3,13 @@ package com.upseil.game.scene2d;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
@@ -28,6 +31,8 @@ import com.upseil.gdx.scene2d.SimpleChangeListener;
 
 @Wire
 public class MenuStage extends Stage {
+    
+    private static final float TitleTopPadding = 50;
 
     private TagManager<Tag> tagManager;
     private ComponentMapper<Ignore> ignoreMapper;
@@ -40,34 +45,60 @@ public class MenuStage extends Stage {
         world.inject(this);
         
         TitleGroup title = new TitleGroup(viewport.getWorldWidth());
+        title.setPosition((viewport.getWorldWidth() - title.getPrefWidth()) / 2, (viewport.getWorldHeight() - title.getPrefHeight()) / 2);
+        title.addAction(delay(title.getAnimationDuration(), run(() -> {
+            title.addAction(moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, 1, Interpolation.fade));
+        })));
         
-        Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "big");
+        Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
         startGameButton.addListener(new SimpleChangeListener(() -> {
             ignoreMapper.create(tagManager.getEntityId(Tag.Menu));
             ignoreMapper.remove(tagManager.getEntityId(Tag.Grid));
             ignoreMapper.remove(tagManager.getEntityId(Tag.HUD));
         }));
         
-        Table container = new Table(skin);
-        container.setFillParent(true);
-        container.top();
+        Button exitButton = null;
+        ApplicationType applicationType = Gdx.app.getType();
+        if (applicationType == ApplicationType.Android || applicationType == ApplicationType.Desktop) {
+            exitButton = new TextButton(hudMessages.get("exit"), skin, "menu1");
+            exitButton.addListener(new SimpleChangeListener(() -> Gdx.app.exit()));
+        }
         
-        container.add(title).expandX().pad(50, 0, 25, 0);
-        container.row();
-        container.add(startGameButton);
-        addActor(container);
+        Table controls = new Table(skin);
+        controls.setFillParent(true);
+        controls.getColor().a = 0;
+        controls.addAction(delay(title.getAnimationDuration(), fadeIn(1)));
+        
+        controls.defaults().space(25).fillX();
+        controls.add(startGameButton);
+        if (exitButton != null) {
+            controls.row();
+            controls.add(exitButton);
+        }
+        
+        addActor(controls);
+        addActor(title);
     }
     
     private static class TitleGroup extends WidgetGroup {
         
-        private static final float ActionDelay = 0.1f;
+        private static final float FlyInDelay = 0.5f;
         private static final float FlyInDuration = 1.5f;
+        private static final Interpolation FlyInInterpolation = Interpolation.swingOut;
+        
+        private static final float OutlinesFadeInDelay = FlyInDelay + FlyInDuration + 0.1f;
         private static final float OutlinesFadeInDuration = 1f;
+        
+        private static final float FillingsFadeInDelay = OutlinesFadeInDelay + OutlinesFadeInDuration * 0.5f;
         private static final float FillingsFadeInDuration = 1f;
-        private static final float MaxFillingsFadeInDelay = 0.25f;
+        private static final float MaxAdditionalFillingsFadeInDelay = 0.75f;
 
         private final int width;
         private final int height;
+        
+        private float highestAdditionalFillingsFadeInDelay;
+        private float stageWidth;
+        private float stageHeight;
         
         public TitleGroup(float worldWidth) {
             TextureAtlas titleAtlas = new TextureAtlas("title/title.atlas");
@@ -78,44 +109,74 @@ public class MenuStage extends Stage {
             this.height = backgroundWhiteRegion.originalHeight;
             
             float slope = (float) height / (backgroundWhiteRegion.packedWidth + backgroundBlackRegion.packedWidth - width);
-            
-            float backgroundWhiteStartX = worldWidth / 4;
+
+            float backgroundWhiteStartX = worldWidth * -1.0f;
+            float backgroundWhiteStartY = slope * backgroundWhiteStartX;
             Image backgroundWhite = new Image(backgroundWhiteRegion);
-            backgroundWhite.setPosition(-backgroundWhiteStartX, slope * -backgroundWhiteStartX);
-            backgroundWhite.addAction(moveTo(backgroundWhiteRegion.offsetX, backgroundWhiteRegion.offsetY, FlyInDuration, Interpolation.swingOut));
+            backgroundWhite.setPosition(backgroundWhiteStartX, backgroundWhiteStartY);
+            backgroundWhite.addAction(delay(FlyInDelay, moveTo(backgroundWhiteRegion.offsetX, backgroundWhiteRegion.offsetY, FlyInDuration, FlyInInterpolation)));
             addActor(backgroundWhite);
             
-            float backgroundBlackStartX = backgroundWhiteStartX + 2 * backgroundBlackRegion.offsetX;
+            float backgroundBlackStartX = backgroundWhiteStartX * -1 + backgroundBlackRegion.offsetX;
+            float backgroundBlackStartY = -1 * backgroundWhiteStartY;
             Image backgroundBlack = new Image(backgroundBlackRegion);
-            backgroundBlack.setPosition(backgroundBlackStartX, (slope * backgroundBlackStartX) - backgroundBlackRegion.offsetX);
-            backgroundBlack.addAction(moveTo(backgroundBlackRegion.offsetX, backgroundBlackRegion.offsetY, FlyInDuration, Interpolation.swingOut));
+            backgroundBlack.setPosition(backgroundBlackStartX, backgroundBlackStartY);
+            backgroundBlack.addAction(delay(FlyInDelay, moveTo(backgroundBlackRegion.offsetX, backgroundBlackRegion.offsetY, FlyInDuration, FlyInInterpolation)));
             addActor(backgroundBlack);
             
             for (AtlasRegion region : titleAtlas.getRegions()) {
                 if (region.name.startsWith("filling-")) {
-                    float delay = FlyInDuration + ActionDelay + OutlinesFadeInDuration + MathUtils.random(MaxFillingsFadeInDelay);
-                    Image filling = createAlignedImage(region);
-                    filling.getColor().a = 0;
-                    filling.addAction(delay(delay, fadeIn(FillingsFadeInDuration)));
-                    addActor(filling);
+                    float additionalDelay = MathUtils.random(MaxAdditionalFillingsFadeInDelay);
+                    if (additionalDelay > highestAdditionalFillingsFadeInDelay) {
+                        highestAdditionalFillingsFadeInDelay = additionalDelay;
+                    }
+                    float totalDelay = FillingsFadeInDelay + additionalDelay;
+                    addActor(createFadeInImage(region, totalDelay, FlyInDuration));
                 }
             }
-            
-            Image outlinesStay = createAlignedImage(titleAtlas.findRegion("outlines-stay"));
-            outlinesStay.getColor().a = 0;
-            outlinesStay.addAction(delay(FlyInDuration + ActionDelay, fadeIn(OutlinesFadeInDuration)));
-            addActor(outlinesStay);
-            
-            Image outlinesColorful = createAlignedImage(titleAtlas.findRegion("outlines-colorful"));
-            outlinesColorful.getColor().a = 0;
-            outlinesColorful.addAction(delay(FlyInDuration + ActionDelay, fadeIn(OutlinesFadeInDuration)));
-            addActor(outlinesColorful);
+
+            addActor(createFadeInImage(titleAtlas.findRegion("outlines-stay"), OutlinesFadeInDelay, OutlinesFadeInDuration));
+            addActor(createFadeInImage(titleAtlas.findRegion("outlines-colorful"), OutlinesFadeInDelay, OutlinesFadeInDuration));
+        }
+        
+        private Image createFadeInImage(AtlasRegion region, float delay, float duration) {
+            Image image = createAlignedImage(region);
+            image.getColor().a = 0;
+            image.addAction(delay(delay, fadeIn(duration)));
+            return image;
         }
         
         private Image createAlignedImage(AtlasRegion region) {
             Image image = new Image(region);
             image.setPosition(region.offsetX, region.offsetY);
             return image;
+        }
+        
+        @Override
+        public void validate() {
+            Stage stage = getStage();
+            if (getActions().size == 0 && stage != null) {
+                float stageWidth = stage.getWidth();
+                float stageHeight = stage.getHeight();
+                if (this.stageWidth != stageWidth || this.stageHeight != stageHeight) {
+                    invalidate();
+                }
+            }
+            super.validate();
+        }
+        
+        @Override
+        public void layout() {
+            if (getActions().size == 0) {
+                Stage stage = getStage();
+                stageWidth = stage.getWidth();
+                stageHeight = stage.getHeight();
+                setPosition((stageWidth - width) / 2, stageHeight - height - TitleTopPadding);
+            }
+        }
+        
+        public float getAnimationDuration() {
+            return FillingsFadeInDelay + highestAdditionalFillingsFadeInDelay + FillingsFadeInDuration;
         }
 
         @Override

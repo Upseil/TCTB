@@ -4,6 +4,7 @@ import com.artemis.BaseSystem;
 import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.Config.GameConfig;
 import com.upseil.game.Layers;
@@ -53,8 +54,7 @@ public class GameInitializer extends BaseSystem {
     }
 
     private void initializeGameMenu() {
-        ScreenDivider menuDivider = new ScreenRatioDivider("1:1");
-        Viewport menuViewport = new PartialScreenViewport(menuDivider);
+        Viewport menuViewport = new ScreenViewport();
         MenuStage menuStage = new MenuStage(menuViewport, renderSystem.getGlobalBatch(), world);
         EntityEdit menu = world.createEntity().edit();
         menu.create(Layer.class).setZIndex(Layers.UI.getZIndex());

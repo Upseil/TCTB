@@ -14,5 +14,5 @@
     <extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.scene2d" />
     <extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.system" />
 	
-	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.GameConfig" />
+	<extend-configuration-property name="artemis.reflect.include" value="com.upseil.game.Config" />
 </module>
