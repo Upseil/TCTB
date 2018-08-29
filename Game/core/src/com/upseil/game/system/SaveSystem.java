@@ -1,8 +1,8 @@
 package com.upseil.game.system;
 
 import com.artemis.ComponentMapper;
+import com.upseil.game.Constants.Tag;
 import com.upseil.game.Savegame;
-import com.upseil.game.Tag;
 import com.upseil.game.component.GameState;
 import com.upseil.gdx.artemis.ArtemisConfigs.SaveConfig;
 import com.upseil.gdx.artemis.system.AbstractSaveSystem;

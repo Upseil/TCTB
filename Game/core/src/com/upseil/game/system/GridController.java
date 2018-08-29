@@ -1,6 +1,16 @@
 package com.upseil.game.system;
 
-import static com.upseil.game.Config.GridConfigValues.*;
+import static com.upseil.game.Config.GridConfigValues.BorderSize;
+import static com.upseil.game.Config.GridConfigValues.CellSize;
+import static com.upseil.game.Config.GridConfigValues.ExclusionAreaSize;
+import static com.upseil.game.Config.GridConfigValues.GridPadding;
+import static com.upseil.game.Config.GridConfigValues.GridSize;
+import static com.upseil.game.Config.GridConfigValues.MinSlowMoTimeScale;
+import static com.upseil.game.Config.GridConfigValues.SlowMoThresholdFactor;
+import static com.upseil.game.Config.GridConfigValues.Spacing;
+import static com.upseil.game.Config.GridConfigValues.TimeScaleAlterationRate;
+import static com.upseil.game.Config.GridConfigValues.TimeScaleDecreaseInterpolation;
+import static com.upseil.game.Config.GridConfigValues.TimeScaleIncreaseInterpolation;
 
 import com.artemis.BaseSystem;
 import com.artemis.ComponentMapper;
@@ -17,9 +27,9 @@ import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
 import com.badlogic.gdx.utils.Scaling;
 import com.upseil.game.Config.GameConfig;
 import com.upseil.game.Config.GridConfig;
+import com.upseil.game.Constants.Layers;
+import com.upseil.game.Constants.Tag;
 import com.upseil.game.GameApplication;
-import com.upseil.game.Layers;
-import com.upseil.game.Tag;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.scene2d.GridActor;

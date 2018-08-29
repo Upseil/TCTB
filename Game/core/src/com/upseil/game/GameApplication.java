@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.upseil.game.Config.GameConfig;
+import com.upseil.game.Constants.Tag;
 import com.upseil.game.system.GameInitializer;
 import com.upseil.game.system.GridController;
 import com.upseil.game.system.LoadSystem;

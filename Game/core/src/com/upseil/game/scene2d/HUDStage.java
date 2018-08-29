@@ -28,7 +28,7 @@ import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.Config.GameConfig;
 import com.upseil.game.Config.HUDConfig;
-import com.upseil.game.Tag;
+import com.upseil.game.Constants.Tag;
 import com.upseil.game.component.GameState;
 import com.upseil.game.domain.Color;
 import com.upseil.game.event.CellsAddedEvent;

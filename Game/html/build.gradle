@@ -27,6 +27,14 @@ dependencies {
     compile "com.github.nmorel.gwtjackson:gwt-jackson:$jacksonGwtTarget"
 }
 
+task copyGameInit(type: Copy) {
+    from file("../core/assets/game.init")
+    into file("src/com/upseil/game/")
+}
+
+tasks.compileGwt.dependsOn(copyGameInit)
+tasks.draftCompileGwt.dependsOn(copyGameInit)
+
 task addSource {
 	doLast {
 		sourceSets.main.compileClasspath += files(project(':core').sourceSets.main.allJava.srcDirs)
