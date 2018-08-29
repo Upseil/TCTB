@@ -3,7 +3,6 @@ package com.upseil.game.scene2d;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
-import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
@@ -32,6 +31,11 @@ import com.upseil.gdx.scene2d.SimpleChangeListener;
 public class MenuStage extends Stage {
     
     private static final float TitleTopPadding = 50;
+    private static final float TitleMoveDuration = 1f;
+    
+    private static final float ControlsTopPadding = 100;
+    private static final float ControlsFadeInDelay = TitleMoveDuration / 2;
+    private static final float ControlsFadeInDuration = 1f;
 
     private TagManager<Tag> tagManager;
     private ComponentMapper<Ignore> ignoreMapper;
@@ -45,9 +49,8 @@ public class MenuStage extends Stage {
         
         TitleGroup title = new TitleGroup(viewport.getWorldWidth());
         title.setPosition((viewport.getWorldWidth() - title.getPrefWidth()) / 2, (viewport.getWorldHeight() - title.getPrefHeight()) / 2);
-        title.addAction(delay(title.getAnimationDuration(), run(() -> {
-            title.addAction(moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, 1, Interpolation.fade));
-        })));
+        title.addAction(delay(title.getAnimationDuration(),
+                moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
         
         Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
         startGameButton.addListener(new SimpleChangeListener(() -> {
@@ -65,8 +68,7 @@ public class MenuStage extends Stage {
         
         Table controls = new Table(skin);
         controls.setFillParent(true);
-        controls.getColor().a = 0;
-        controls.addAction(delay(title.getAnimationDuration(), fadeIn(1)));
+        controls.top().padTop(TitleTopPadding + title.getPrefHeight() + ControlsTopPadding);
         
         controls.defaults().space(25).fillX();
         controls.add(startGameButton);
@@ -74,6 +76,9 @@ public class MenuStage extends Stage {
             controls.row();
             controls.add(exitButton);
         }
+
+        controls.getColor().a = 0;
+        controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
         
         addActor(controls);
         addActor(title);
