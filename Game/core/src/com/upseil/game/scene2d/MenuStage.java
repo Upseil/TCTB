@@ -14,7 +14,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -90,8 +89,8 @@ public class MenuStage extends Stage {
         private static final float OutlinesFadeInDuration = 1f;
         
         private static final float FillingsFadeInDelay = OutlinesFadeInDelay + OutlinesFadeInDuration * 0.5f;
-        private static final float FillingsFadeInDuration = 1f;
-        private static final float MaxAdditionalFillingsFadeInDelay = 0.75f;
+        private static final float FillingsFadeInDuration = 0.4f;
+        private static final float MaxAdditionalFillingsFadeInDelay = 1f;
 
         private final int width;
         private final int height;
@@ -126,7 +125,7 @@ public class MenuStage extends Stage {
             
             for (AtlasRegion region : titleAtlas.getRegions()) {
                 if (region.name.startsWith("filling-")) {
-                    float additionalDelay = MathUtils.random(MaxAdditionalFillingsFadeInDelay);
+                    float additionalDelay = (region.offsetX / width) * MaxAdditionalFillingsFadeInDelay;
                     if (additionalDelay > highestAdditionalFillingsFadeInDelay) {
                         highestAdditionalFillingsFadeInDelay = additionalDelay;
                     }
