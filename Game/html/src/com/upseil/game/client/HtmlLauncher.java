@@ -115,6 +115,7 @@ public class HtmlLauncher extends GwtApplication {
         };
         gamePanel.setWidth("" + width + "px");
         gamePanel.setHeight("" + height + "px");
+        gamePanel.addStyleName("root");
         RootPanel.get().add(gamePanel);
         return gamePanel;
     }
