@@ -19,8 +19,8 @@ buildscript {
 ext {
     workingTitle = "TCTB"
 	
-	gradleTarget = '3.2.1'
-	gwtGradleTarget = '0.6'
+	gradleTarget = '4.6'
+	gwtGradleTarget = '1.0.6'
 	javaTarget = '1.8'
     gwtTarget = '2.8.1'
 	

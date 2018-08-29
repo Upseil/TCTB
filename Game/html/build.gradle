@@ -1,12 +1,11 @@
 // Game HTML
 
-apply plugin: "jetty"
 apply plugin: "gwt"
 apply plugin: "war"
 
 buildscript {
     dependencies {
-        classpath "de.richsource.gradle.plugins:gwt-gradle-plugin:$gwtGradleTarget"
+        classpath "org.wisepersist:gwt-gradle-plugin:$gwtGradleTarget"
     }
 }
 
@@ -45,6 +44,9 @@ task addSource {
 	}
 }
 
+tasks.compileGwt.dependsOn(addSource)
+tasks.draftCompileGwt.dependsOn(addSource)
+
 gwt {
     gwtVersion="$gwtTarget" // Should match the gwt version used for building the gwt backend
     maxHeapSize="1G" // Default 256m is not enough for gwt compiler. GWT is HUNGRY
@@ -61,17 +63,34 @@ gwt {
     }
 }
 
-task draftRun(type: JettyRunWar) {
-    dependsOn draftWar
-    dependsOn.remove('war')
-    webApp=draftWar.archivePath
-    daemon=true
+import org.wisepersist.gradle.plugins.gwt.GwtSuperDev
+
+task startHttpServer () {
+    dependsOn draftCompileGwt
+
+    doLast {
+        String output = project.buildDir.path + "/gwt/draftOut"
+    
+        copy {
+            from "webapp"
+            into output
+        }
+        copy {
+            from "war"
+            into output
+        }
+
+        HttpFileServer server = new SimpleHttpFileServerFactory().start(new File(output), 8080)
+
+        println "Server started in directory " + server.getContentRoot() + ", http://localhost:" + server.getPort()
+    }
 }
 
-task superDev(type: de.richsource.gradle.plugins.gwt.GwtSuperDev) {
-    dependsOn draftRun
+task superDev (type: GwtSuperDev) {
+    description 'Starts a server and runs the GWT super dev mode'
+    dependsOn startHttpServer
     doFirst {
-    	gwt.modules = gwt.devModules
+        gwt.modules = gwt.devModules
     }
 }
 
@@ -92,13 +111,6 @@ task dist(dependsOn: [clean, compileGwt]) {
         }
     }
 }
-
-draftWar {
-   from "war"
-}
-
-tasks.compileGwt.dependsOn(addSource)
-tasks.draftCompileGwt.dependsOn(addSource)
 
 eclipse.project {
     name = workingTitle + "-Html"
