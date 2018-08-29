@@ -145,20 +145,20 @@ public class HUDStage extends Stage {
             dummyText.append('0');
             expectedColorCount /= 10;
         } while (expectedColorCount != 0);
-        Label widthProvider = new Label(dummyText.toString(), skin, "default-bold");
+        Label widthProvider = new Label(dummyText.toString(), skin, "default");
         float minWidth = widthProvider.getPrefWidth();
         
         Table cellCounters = new Table(skin);
         for (int n = 0; n < Color.size(); n++) {
             final int number = n;
-            Label countLabel = new Label(null, skin, "default-bold");
+            Label countLabel = new Label(null, skin, "default");
             countLabel.setAlignment(Align.right);
             cellCounters.add(ValueLabelBuilder.decorate(countLabel)
                                               .updateIf(this::updateValueLabels)
                                               .withValue(() -> text(getTextColor(number)).append(gridController.getColorCount(number)).toString())
                                           .build())
                         .expandX().right().minWidth(minWidth);
-            cellCounters.add(ValueLabelBuilder.newLabel(skin, "default-bold")
+            cellCounters.add(ValueLabelBuilder.newLabel(skin, "default")
                                               .updateIf(this::updateValueLabels)
                                               .withValue(() -> text(getTextColor(number)).append("x").toString())
                                           .build())
