@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.Interpolation.SwingOut;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -24,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.Constants.Tag;
+import com.upseil.game.math.Swing2Out;
 import com.upseil.gdx.artemis.component.Ignore;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.SimpleChangeListener;
@@ -89,7 +89,7 @@ public class MenuStage extends Stage {
         
         private static final float FlyInDelay = 0.5f;
         private static final float FlyInDuration = 1.5f;
-        private static final Interpolation FlyInInterpolation = new SwingOut(1.5f);
+        private static final Interpolation FlyInInterpolation = new Swing2Out();
         
         private static final float OutlinesFadeInDelay = FlyInDelay + FlyInDuration + 0.1f;
         private static final float OutlinesFadeInDuration = 1f;

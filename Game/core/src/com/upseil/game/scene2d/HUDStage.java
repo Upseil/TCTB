@@ -95,7 +95,7 @@ public class HUDStage extends Stage {
             buttons[number] = button;
         }
         
-        container.add(createHeader()).padBottom(10).colspan(3).expandY().bottom();
+        container.add(createHeader()).colspan(3).expandY().bottom();
 
         container.row();
         container.add();
