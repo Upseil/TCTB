@@ -353,8 +353,8 @@ public class GridActor extends Group {
         
         boolean cellsWereRemoved = false;
         for (CellActor cell : cellsToStop) {
-            int x = toGrid(cell.getX());
-            int y = toGrid(cell.getY());
+            int x = toGrid(cell.getX(Align.center));
+            int y = toGrid(cell.getY(Align.center));
             float targetX = toWorld(x);
             float targetY = toWorld(y);
             float duration = Math.max(Math.abs(cell.getX() - targetX), Math.abs(cell.getY() - targetY)) / style.cellMoveSpeed;
