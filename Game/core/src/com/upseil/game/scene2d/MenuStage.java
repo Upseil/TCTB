@@ -3,6 +3,8 @@ package com.upseil.game.scene2d;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
+import static com.upseil.game.Config.MenuConfigValues.GlassAlpha;
+import static com.upseil.game.Config.MenuConfigValues.TitleAnimation;
 
 import com.artemis.ComponentMapper;
 import com.artemis.World;
@@ -13,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -24,12 +27,14 @@ import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.upseil.game.Config.GameConfig;
 import com.upseil.game.Config.MenuConfig;
-import com.upseil.game.Config.MenuConfigValues;
 import com.upseil.game.Constants.Tag;
+import com.upseil.game.GameApplication;
 import com.upseil.game.math.Swing2Out;
+import com.upseil.game.scene2d.MenuGridBackground.MenuGridBackgroundStyle;
 import com.upseil.gdx.artemis.component.Ignore;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.SimpleChangeListener;
+import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 
 @Wire
 public class MenuStage extends Stage {
@@ -47,20 +52,26 @@ public class MenuStage extends Stage {
     @Wire(name="Skin") private Skin skin;
     @Wire(name="UI") private I18NBundle hudMessages;
     
+    private final Actor background;
+    private final MenuGridBackground grid;
+    private final Actor glass;
+    private final TitleGroup title;
+    
+    private float width;
+    private float height;
+    
     public MenuStage(Viewport viewport, Batch batch, World world) {
         super(viewport, batch);
         world.inject(this);
         
         GameConfig gameConfig = world.getRegistered("Config");
         MenuConfig config = gameConfig.getMenuConfig();
-        boolean titleAnimation = config.getBoolean(MenuConfigValues.TitleAnimation);
+        boolean titleAnimation = config.getBoolean(TitleAnimation);
         
-        TitleGroup title = new TitleGroup(viewport.getWorldWidth(), titleAnimation);
-        if (titleAnimation) {
-            title.setPosition((viewport.getWorldWidth() - title.getPrefWidth()) / 2, (viewport.getWorldHeight() - title.getPrefHeight()) / 2);
-            title.addAction(delay(title.getAnimationDuration(),
-                    moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
-        }
+        width = viewport.getWorldWidth();
+        height = viewport.getWorldHeight();
+        
+        title = new TitleGroup(width, titleAnimation);
         
         Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
         startGameButton.addListener(new SimpleChangeListener(() -> {
@@ -86,14 +97,51 @@ public class MenuStage extends Stage {
             controls.row();
             controls.add(exitButton);
         }
-
-        if (titleAnimation) {
-            controls.getColor().a = 0;
-            controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
-        }
         
+        background = new Image(BackgroundBuilder.byColor(skin, "white"));
+        background.setSize(width, height);
+        MenuGridBackgroundStyle gridStyle = new MenuGridBackgroundStyle(config);
+        grid = new MenuGridBackground(world, gridStyle, GameApplication.Random, width, height);
+        grid.setPosition((width - grid.getWorldWidth()) / 2, (height- grid.getWorldHeight()) / 2);
+        glass = new Image(BackgroundBuilder.byColor(skin, "black", config.getFloat(GlassAlpha)));
+        glass.setSize(width, height);
+
+        addActor(background);
+        addActor(grid);
+        addActor(glass);
         addActor(controls);
         addActor(title);
+
+        if (titleAnimation) {
+            title.setPosition((width - title.getPrefWidth()) / 2, (height - title.getPrefHeight()) / 2);
+            title.addAction(delay(title.getAnimationDuration(),
+                    moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
+            
+            controls.getColor().a = 0;
+            controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
+
+            grid.randomEntrance(title.getAnimationDuration() + ControlsFadeInDelay + ControlsFadeInDuration);
+        }
+    }
+    
+    @Override
+    public void draw() {
+        float worldWidth = getViewport().getWorldWidth();
+        float worldHeight = getViewport().getWorldHeight();
+        if (width != worldWidth || height != worldHeight) {
+            sizeChanged(worldWidth, worldHeight);
+            width = worldWidth;
+            height = worldHeight;
+        }
+        
+        super.draw();
+    }
+
+    private void sizeChanged(float newWidth, float newHeight) {
+        background.setSize(newWidth, newHeight);
+        glass.setSize(newWidth, newHeight);
+        // TODO Adjust grid
+        title.invalidate();
     }
     
     private static class TitleGroup extends WidgetGroup {
@@ -113,8 +161,6 @@ public class MenuStage extends Stage {
         private final int height;
         
         private float highestAdditionalFillingsFadeInDelay;
-        private float stageWidth;
-        private float stageHeight;
         
         public TitleGroup(float worldWidth, boolean titleAnimation) {
             TextureAtlas titleAtlas = new TextureAtlas("title/title.atlas");
@@ -189,25 +235,10 @@ public class MenuStage extends Stage {
         }
         
         @Override
-        public void validate() {
-            Stage stage = getStage();
-            if (getActions().size == 0 && stage != null) {
-                float stageWidth = stage.getWidth();
-                float stageHeight = stage.getHeight();
-                if (this.stageWidth != stageWidth || this.stageHeight != stageHeight) {
-                    invalidate();
-                }
-            }
-            super.validate();
-        }
-        
-        @Override
         public void layout() {
             if (getActions().size == 0) {
                 Stage stage = getStage();
-                stageWidth = stage.getWidth();
-                stageHeight = stage.getHeight();
-                setPosition((stageWidth - getPrefWidth()) / 2, stageHeight - getPrefHeight() - TitleTopPadding);
+                setPosition((stage.getWidth() - getPrefWidth()) / 2, stage.getHeight() - getPrefHeight() - TitleTopPadding);
             }
         }
         

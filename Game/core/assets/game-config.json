@@ -1,6 +1,19 @@
 {
     "menu": {
-        "titleAnimation": true
+        "titleAnimation": true,
+        
+        "cellSize": 30,
+        "cellSpacing": 5,
+        "cellMoveSpeed": 500,
+        
+        "maxAdditionalStripeInDelay": 0,
+        "maxAdditionalFadeInDelay": 0.75,
+        "fadeInDuration": 2,
+        "maxAdditionalScaleInDelay": 0.75,
+        "scaleInDuration": 0.5,
+        
+        
+        "glassAlpha": 0.7
     },
     "HUD": {
         "padding": 10,

@@ -32,7 +32,7 @@ import com.upseil.game.Constants.Tag;
 import com.upseil.game.GameApplication;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
-import com.upseil.game.scene2d.GridActor;
+import com.upseil.game.scene2d.GameGrid;
 import com.upseil.game.scene2d.HUDStage;
 import com.upseil.gdx.artemis.component.ActorComponent;
 import com.upseil.gdx.artemis.component.Ignore;
@@ -67,7 +67,7 @@ public class GridController extends BaseSystem {
     private Interpolation timeScaleDecreaseInterpolation;
     private float loseEpsilon;
     
-    private GridActor grid;
+    private GameGrid grid;
     
     private boolean updateScreenSize;
     private boolean resetGrid;
@@ -108,7 +108,7 @@ public class GridController extends BaseSystem {
         gridEdit.create(InputHandler.class).setProcessor(gridStage);
         gridScene = gridEdit.create(Scene.class).initialize(gridStage);
 
-        grid = new GridActor(world, GameApplication.Random, config.getFloat(ExclusionAreaSize));
+        grid = new GameGrid(world, GameApplication.Random, config.getFloat(ExclusionAreaSize));
         gridEdit.create(ActorComponent.class).set(grid);
         gridScene.addActor(grid);
 

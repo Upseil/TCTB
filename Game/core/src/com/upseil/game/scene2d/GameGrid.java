@@ -36,7 +36,6 @@ import com.badlogic.gdx.utils.ObjectSet;
 import com.upseil.game.Config.GameConfig;
 import com.upseil.game.Config.GridConfig;
 import com.upseil.game.Config.GridConfigValues;
-import com.upseil.game.GameApplication;
 import com.upseil.game.domain.Color;
 import com.upseil.game.domain.Direction;
 import com.upseil.game.event.CellsAddedEvent;
@@ -50,11 +49,11 @@ import com.upseil.gdx.pool.pair.PooledPair;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
 
-public class GridActor extends Group {
+public class GameGrid extends Group {
     
     private final World world;
     private final Skin skin;
-    private final GridStyle style;
+    private final GameGridStyle style;
     private final ExtendedRandom random;
     
     private final Group borderGroup;
@@ -75,12 +74,12 @@ public class GridActor extends Group {
     private float minBlackWhiteDistance;
     private boolean teleportEnabled;
     
-    public GridActor(World world, ExtendedRandom random, float exclusionAreaSize) {
+    public GameGrid(World world, ExtendedRandom random, float exclusionAreaSize) {
         this.world = world;
         this.skin = world.getRegistered("Skin");
         GameConfig gameConfig = world.getRegistered("Config");
         GridConfig config = gameConfig.getGridConfig();
-        this.style = new GridStyle(config);
+        this.style = new GameGridStyle(config);
         this.random = random;
         
         int size = config.getInt(GridConfigValues.GridSize);
@@ -144,7 +143,6 @@ public class GridActor extends Group {
         int maxX = Math.round(exclusionAreaX);
         int maxY = Math.round(exclusionAreaY);
         
-        ExtendedRandom random = GameApplication.Random;
         int blackX = random.randomBoolean() ? random.randomInt(1, maxX - 1) : random.randomInt(minX, width - 2);
         int blackY = random.randomBoolean() ? random.randomInt(1, maxY - 1) : random.randomInt(minY, height - 2);
         int whiteX = width - blackX - 1;
@@ -169,14 +167,14 @@ public class GridActor extends Group {
         return cell;
     }
 
-    public CellActor createCell(int x, int y, Color color) {
+    private CellActor createCell(int x, int y, Color color) {
         CellActor cell = PooledPools.obtain(CellActor.class).initialize(skin, color, style.cellSize);
         cell.setPosition(toWorld(x), toWorld(y));
         cellGroup.addActor(cell);
         return cell;
     }
 
-    public void setCell(int x, int y, CellActor cell) {
+    private void setCell(int x, int y, CellActor cell) {
         cells[x][y] = cell;
         int colorNumber = cell.getCellColor().getNumber();
         if (colorNumber >= 0) {
@@ -671,13 +669,13 @@ public class GridActor extends Group {
         return movementInProgress;
     }
     
-    public GridStyle getStyle() {
+    public GameGridStyle getStyle() {
         return style;
     }
     
     // Utility Classes ----------------------------------------------------------------------------
 
-    public static class GridStyle {
+    public static class GameGridStyle {
         
         public final float borderSize;
         public final float cellSize;
@@ -693,13 +691,13 @@ public class GridActor extends Group {
         public final float removalMoveAmount;
         public final float removalScaleTo;
         
-        public GridStyle(GridConfig config) {
+        public GameGridStyle(GridConfig config) {
             this(config.getFloat(BorderSize), config.getFloat(CellSize), config.getFloat(Spacing), config.getFloat(CellMoveSpeed),
                  config.getFloat(TeleportMoveSpeed), config.getFloat(TeleportDelay), config.getFloat(MaxRemovalDelay),
                  config.getFloat(RemovalDuration), config.getFloat(RemovalMoveAmount), config.getFloat(RemovalScaleTo));
         }
 
-        public GridStyle(float borderSize, float cellSize, float spacing, float cellMoveSpeed, float teleportMoveSpeed, float teleportDelay,
+        public GameGridStyle(float borderSize, float cellSize, float spacing, float cellMoveSpeed, float teleportMoveSpeed, float teleportDelay,
                          float maxRemovalDelay, float removalDuration, float removalMoveAmount, float removalScaleTo) {
             this.borderSize = borderSize;
             this.cellSize = cellSize;
