@@ -3,7 +3,7 @@ package com.upseil.game;
 public final class Constants {
     
     public static enum GameInit { 
-        Title, FixedSize, Width, Height
+        Title, FixedSize, MinWidth, MinHeight, PrefWidth, PrefHeight
     }
 
     public static enum Tag {

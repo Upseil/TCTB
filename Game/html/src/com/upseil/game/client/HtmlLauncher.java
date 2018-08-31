@@ -1,6 +1,11 @@
 package com.upseil.game.client;
 
-import static com.upseil.game.Constants.GameInit.*;
+import static com.upseil.game.Constants.GameInit.FixedSize;
+import static com.upseil.game.Constants.GameInit.MinHeight;
+import static com.upseil.game.Constants.GameInit.MinWidth;
+import static com.upseil.game.Constants.GameInit.PrefHeight;
+import static com.upseil.game.Constants.GameInit.PrefWidth;
+import static com.upseil.game.Constants.GameInit.Title;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
@@ -52,6 +57,7 @@ public class HtmlLauncher extends GwtApplication {
             }
             @Override
             public void afterSetup() {
+                // TODO Handle resizing for fixed size applications using min/pref/max width/height
                 if (!GameInit.getBoolean(FixedSize)) {
                     setupResizing();
                 }
@@ -84,13 +90,26 @@ public class HtmlLauncher extends GwtApplication {
     
     @Override
     public GwtApplicationConfiguration getConfig() {
+        int clientWidth = Window.getClientWidth();
+        int clientHeight = Window.getClientHeight();
+        
         int width, height;
         if (GameInit.getBoolean(FixedSize)) {
-            width = GameInit.getInt(Width);
-            height = GameInit.getInt(Height);
+            width = GameInit.getInt(PrefWidth);
+            height = GameInit.getInt(PrefHeight);
+            if (width > clientWidth) {
+                float ratio = (float) height / width;
+                width = Math.max(clientWidth, GameInit.getInt(MinWidth));
+                height = (int) (width * ratio);
+            } 
+            if (height > clientHeight) {
+                float ratio = (float) width / height;
+                height = Math.max(clientHeight, GameInit.getInt(MinHeight));
+                width = (int) (height * ratio);
+            }
         } else {
-            width = Window.getClientWidth();
-            height = Window.getClientHeight();
+            width = clientWidth;
+            height = clientHeight;
         }
         
         GwtApplicationConfiguration configuration = new GwtApplicationConfiguration(width, height);

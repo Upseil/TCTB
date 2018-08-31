@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import com.badlogic.gdx.Files;
+import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.upseil.game.Constants.GameInit;
@@ -24,11 +25,25 @@ public class DesktopLauncher {
         } catch (IOException e) {
             throw new IllegalArgumentException("Can't read the init file", e);
         }
+
+        int width = gameInit.getInt(PrefWidth);
+        int height = gameInit.getInt(PrefHeight);
+        DisplayMode display = LwjglApplicationConfiguration.getDesktopDisplayMode();
+        if (width > display.width) {
+            float ratio = (float) height / width;
+            width = Math.max(display.width, gameInit.getInt(MinWidth));
+            height = (int) (width * ratio);
+        } 
+        if (height > display.height) {
+            float ratio = (float) width / height;
+            height = Math.max(display.height, gameInit.getInt(MinHeight));
+            width = (int) (height * ratio);
+        }
         
         LwjglApplicationConfiguration configuration = new LwjglApplicationConfiguration();
         configuration.title = gameInit.get(Title);
-        configuration.width = gameInit.getInt(Width);
-        configuration.height = gameInit.getInt(Height);
+        configuration.width = width;
+        configuration.height = height;
         configuration.resizable = !gameInit.getBoolean(FixedSize);
         configuration.addIcon("icon/icon-128.png", Files.FileType.Internal);
         configuration.addIcon("icon/icon-32.png", Files.FileType.Internal);
