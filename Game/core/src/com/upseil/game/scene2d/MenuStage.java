@@ -22,6 +22,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.upseil.game.Config.GameConfig;
+import com.upseil.game.Config.MenuConfig;
+import com.upseil.game.Config.MenuConfigValues;
 import com.upseil.game.Constants.Tag;
 import com.upseil.game.math.Swing2Out;
 import com.upseil.gdx.artemis.component.Ignore;
@@ -48,10 +51,16 @@ public class MenuStage extends Stage {
         super(viewport, batch);
         world.inject(this);
         
-        TitleGroup title = new TitleGroup(viewport.getWorldWidth());
-        title.setPosition((viewport.getWorldWidth() - title.getPrefWidth()) / 2, (viewport.getWorldHeight() - title.getPrefHeight()) / 2);
-        title.addAction(delay(title.getAnimationDuration(),
-                moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
+        GameConfig gameConfig = world.getRegistered("Config");
+        MenuConfig config = gameConfig.getMenuConfig();
+        boolean titleAnimation = config.getBoolean(MenuConfigValues.TitleAnimation);
+        
+        TitleGroup title = new TitleGroup(viewport.getWorldWidth(), titleAnimation);
+        if (titleAnimation) {
+            title.setPosition((viewport.getWorldWidth() - title.getPrefWidth()) / 2, (viewport.getWorldHeight() - title.getPrefHeight()) / 2);
+            title.addAction(delay(title.getAnimationDuration(),
+                    moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
+        }
         
         Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
         startGameButton.addListener(new SimpleChangeListener(() -> {
@@ -78,8 +87,10 @@ public class MenuStage extends Stage {
             controls.add(exitButton);
         }
 
-        controls.getColor().a = 0;
-        controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
+        if (titleAnimation) {
+            controls.getColor().a = 0;
+            controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
+        }
         
         addActor(controls);
         addActor(title);
@@ -105,7 +116,7 @@ public class MenuStage extends Stage {
         private float stageWidth;
         private float stageHeight;
         
-        public TitleGroup(float worldWidth) {
+        public TitleGroup(float worldWidth, boolean titleAnimation) {
             TextureAtlas titleAtlas = new TextureAtlas("title/title.atlas");
             
             AtlasRegion backgroundWhiteRegion = titleAtlas.findRegion("background-white");
@@ -119,33 +130,49 @@ public class MenuStage extends Stage {
             
             float slope = (float) height / (backgroundWhiteRegion.packedWidth + backgroundBlackRegion.packedWidth - width);
 
-            float backgroundWhiteStartX = worldWidth * -1.0f;
-            float backgroundWhiteStartY = slope * backgroundWhiteStartX;
-            Image backgroundWhite = new Image(backgroundWhiteRegion);
-            backgroundWhite.setPosition(backgroundWhiteStartX, backgroundWhiteStartY);
-            backgroundWhite.addAction(delay(FlyInDelay, moveTo(backgroundWhiteRegion.offsetX, backgroundWhiteRegion.offsetY, FlyInDuration, FlyInInterpolation)));
+            Image backgroundWhite = createAlignedImage(backgroundWhiteRegion);
             addActor(backgroundWhite);
-            
-            float backgroundBlackStartX = backgroundWhiteStartX * -1 + backgroundBlackRegion.offsetX;
-            float backgroundBlackStartY = -1 * backgroundWhiteStartY;
-            Image backgroundBlack = new Image(backgroundBlackRegion);
-            backgroundBlack.setPosition(backgroundBlackStartX, backgroundBlackStartY);
-            backgroundBlack.addAction(delay(FlyInDelay, moveTo(backgroundBlackRegion.offsetX, backgroundBlackRegion.offsetY, FlyInDuration, FlyInInterpolation)));
+            Image backgroundBlack = createAlignedImage(backgroundBlackRegion);
             addActor(backgroundBlack);
+            
+            if (titleAnimation) {
+                float backgroundWhiteStartX = worldWidth * -1.0f;
+                float backgroundWhiteStartY = slope * backgroundWhiteStartX;
+                backgroundWhite.setPosition(backgroundWhiteStartX, backgroundWhiteStartY);
+                backgroundWhite.addAction(
+                        delay(FlyInDelay, moveTo(backgroundWhiteRegion.offsetX, backgroundWhiteRegion.offsetY, FlyInDuration, FlyInInterpolation)));
+                
+                float backgroundBlackStartX = backgroundWhiteStartX * -1 + backgroundBlackRegion.offsetX;
+                float backgroundBlackStartY = -1 * backgroundWhiteStartY;
+                backgroundBlack.setPosition(backgroundBlackStartX, backgroundBlackStartY);
+                backgroundBlack.addAction(
+                        delay(FlyInDelay, moveTo(backgroundBlackRegion.offsetX, backgroundBlackRegion.offsetY, FlyInDuration, FlyInInterpolation)));
+            }
             
             for (AtlasRegion region : titleAtlas.getRegions()) {
                 if (region.name.startsWith("filling-")) {
-                    float additionalDelay = (region.offsetX / width) * MaxAdditionalFillingsFadeInDelay;
-                    if (additionalDelay > highestAdditionalFillingsFadeInDelay) {
-                        highestAdditionalFillingsFadeInDelay = additionalDelay;
+                    if (titleAnimation) {
+                        float additionalDelay = (region.offsetX / width) * MaxAdditionalFillingsFadeInDelay;
+                        if (additionalDelay > highestAdditionalFillingsFadeInDelay) {
+                            highestAdditionalFillingsFadeInDelay = additionalDelay;
+                        }
+                        float totalDelay = FillingsFadeInDelay + additionalDelay;
+                        addActor(createFadeInImage(region, totalDelay, FlyInDuration));
+                    } else {
+                        addActor(createAlignedImage(region));
                     }
-                    float totalDelay = FillingsFadeInDelay + additionalDelay;
-                    addActor(createFadeInImage(region, totalDelay, FlyInDuration));
                 }
             }
 
-            addActor(createFadeInImage(titleAtlas.findRegion("outlines-stay"), OutlinesFadeInDelay, OutlinesFadeInDuration));
-            addActor(createFadeInImage(titleAtlas.findRegion("outlines-colorful"), OutlinesFadeInDelay, OutlinesFadeInDuration));
+            AtlasRegion outlinesStayRegion = titleAtlas.findRegion("outlines-stay");
+            AtlasRegion outlinesColorfullRegion = titleAtlas.findRegion("outlines-colorful");
+            if (titleAnimation) {
+                addActor(createFadeInImage(outlinesStayRegion, OutlinesFadeInDelay, OutlinesFadeInDuration));
+                addActor(createFadeInImage(outlinesColorfullRegion, OutlinesFadeInDelay, OutlinesFadeInDuration));
+            } else {
+                addActor(createAlignedImage(outlinesStayRegion));
+                addActor(createAlignedImage(outlinesColorfullRegion));
+            }
         }
         
         private Image createFadeInImage(AtlasRegion region, float delay, float duration) {

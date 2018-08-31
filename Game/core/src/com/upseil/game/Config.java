@@ -10,6 +10,14 @@ import com.upseil.gdx.util.GDXUtil;
 
 public final class Config {
     
+    public enum MenuConfigValues {
+        TitleAnimation
+    }
+    
+    public enum HUDConfigValues {
+        Padding, UpdateInterval, ButtonRatio, ButtonSpacing, CounterSize
+    }
+    
     public enum GridConfigValues {
         // Grid Structure
         GridSize, ExclusionAreaSize,
@@ -23,14 +31,11 @@ public final class Config {
         TimeScaleIncreaseInterpolation, TimeScaleDecreaseInterpolation
     }
     
-    public enum HUDConfigValues {
-        Padding, UpdateInterval, ButtonRatio, CounterSize
-    }
-    
     public static class GameConfig {
         
-        private final GridConfig gridConfig;
+        private final MenuConfig menuConfig;
         private final HUDConfig hudConfig;
+        private final GridConfig gridConfig;
         
         private final SaveConfig saveConfig;
         private final BackgroundBuilder.Config backgroundBuilderConfig;
@@ -39,8 +44,9 @@ public final class Config {
         
         public GameConfig(String path) {
             JsonValue json = GDXUtil.readJson(path);
-            gridConfig = new GridConfig(json.get("grid"));
+            menuConfig = new MenuConfig(json.get("menu"));
             hudConfig = new HUDConfig(json.get("HUD"));
+            gridConfig = new GridConfig(json.get("grid"));
             
             saveConfig = new SaveConfig(json.get("savegame"));
             backgroundBuilderConfig = new BackgroundBuilder.Config(json.get("backgroundBuilder"));
@@ -48,12 +54,16 @@ public final class Config {
             dividerBuilderConfig = new DividerBuilder.Config(json.get("dividerBuilder"));
         }
         
-        public GridConfig getGridConfig() {
-            return gridConfig;
+        public MenuConfig getMenuConfig() {
+            return menuConfig;
         }
         
         public HUDConfig getHUDConfig() {
             return hudConfig;
+        }
+        
+        public GridConfig getGridConfig() {
+            return gridConfig;
         }
         
         public SaveConfig getSavegameConfig() {
@@ -74,10 +84,10 @@ public final class Config {
         
     }
     
-    public static class GridConfig extends EnumerizedJsonBasedProperties<GridConfigValues> {
-        
-        public GridConfig(JsonValue json) {
-            super(json, GridConfigValues.class);
+    public static class MenuConfig extends EnumerizedJsonBasedProperties<MenuConfigValues> {
+
+        public MenuConfig(JsonValue json) {
+            super(json, MenuConfigValues.class);
         }
         
     }
@@ -86,6 +96,14 @@ public final class Config {
         
         public HUDConfig(JsonValue json) {
             super(json, HUDConfigValues.class);
+        }
+        
+    }
+    
+    public static class GridConfig extends EnumerizedJsonBasedProperties<GridConfigValues> {
+        
+        public GridConfig(JsonValue json) {
+            super(json, GridConfigValues.class);
         }
         
     }

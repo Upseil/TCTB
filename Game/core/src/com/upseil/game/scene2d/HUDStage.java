@@ -3,6 +3,7 @@ package com.upseil.game.scene2d;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 import static com.upseil.game.Config.HUDConfigValues.ButtonRatio;
+import static com.upseil.game.Config.HUDConfigValues.ButtonSpacing;
 import static com.upseil.game.Config.HUDConfigValues.CounterSize;
 import static com.upseil.game.Config.HUDConfigValues.Padding;
 import static com.upseil.gdx.scene2d.util.Values.floatValue;
@@ -58,7 +59,8 @@ public class HUDStage extends Stage {
     private final Table container;
     private final Table header;
     private final Button[] buttons;
-    private float buttonRatio;
+    private final float buttonRatio;
+    private final float buttonSpacing;
     
     private GameState gameState;
     
@@ -72,6 +74,7 @@ public class HUDStage extends Stage {
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getHUDConfig();
         buttonRatio = config.getFloat(ButtonRatio);
+        buttonSpacing = config.getFloat(ButtonSpacing);
         
         EventSystem eventSystem = world.getSystem(EventSystem.class);
         eventSystem.registerHandler(CellsRemovedEvent.Type, event -> {
@@ -94,37 +97,33 @@ public class HUDStage extends Stage {
         container = new Table(skin);
         container.setFillParent(true);
         container.pad(config.getFloat(Padding));
-        
-        container.add(header).colspan(3).expandY().bottom();
+
+        container.add();
+        container.add(header).fillX().bottom();
+        container.add();
 
         container.row();
-        container.add(buttons[0]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).right();
+        container.add(buttons[0]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).right().padRight(buttonSpacing);
         container.add();
-        container.add(buttons[2]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).left();
+        container.add(buttons[2]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).left().padLeft(buttonSpacing);
         
         container.row();
         container.add();
-        container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).top();
+        container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).top().padTop(buttonSpacing);
         container.add();
         
         addActor(container);
         updateValueLabels = true;
-        
-        container.debugAll();
     }
     
     // FIXME Somehow this breaks when the screen height is much bigger than the screen width
     private float calculateButtonLength() {
-        float availableWidth = getWidth() - container.getPadLeft() - container.getPadRight();
-        float availableHeight = getHeight() - header.getPrefHeight() - container.getPadTop() - container.getPadBottom();
+        float availableWidth = getWidth() - container.getPadLeft() - container.getPadRight() - 2 * buttonSpacing;
+        float availableHeight = getHeight() - header.getPrefHeight() - container.getPadTop() - container.getPadBottom() - buttonSpacing;
         
-        float length;
-        if (availableWidth < availableHeight) {
-            length = availableWidth / (2 * buttonRatio + 1);
-        } else {
-            length = availableHeight / (buttonRatio + 1);
-        }
-        return length;
+        float lengthBasedOnWidth = availableWidth / (2 * buttonRatio + 1);
+        float lengthBasedOnHeight = availableHeight / (buttonRatio + 1);
+        return Math.min(lengthBasedOnWidth, lengthBasedOnHeight);
     }
     
     private float calculateButtonSize() {
@@ -143,7 +142,7 @@ public class HUDStage extends Stage {
         Table header = new Table(skin);
         header.add(scoreLabel);
         header.row();
-        header.add(cellCounters);
+        header.add(cellCounters).expandX().fillX();
         return header;
     }
 

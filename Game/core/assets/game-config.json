@@ -1,4 +1,14 @@
 {
+    "menu": {
+        "titleAnimation": true
+    },
+    "HUD": {
+        "padding": 10,
+        "updateInterval": 0.1,
+        "buttonRatio": 0.1,
+        "buttonSpacing": 5,
+        "counterSize": 30
+    },
     "grid": {
         "gridSize": 10,
         "exclusionAreaSize": 0.33,
@@ -21,12 +31,6 @@
         "timeScaleAlterationRate": 3.25,
         "timeScaleIncreaseInterpolation": "Pow2In",
         "timeScaleDecreaseInterpolation": "Pow2Out"
-    },
-    "HUD": {
-        "padding": 10,
-        "updateInterval": 0.1,
-        "buttonRatio": 0.1,
-        "counterSize": 30
     },
 	
     "savegame": {
