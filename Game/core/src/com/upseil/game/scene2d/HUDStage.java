@@ -45,7 +45,6 @@ import com.upseil.gdx.scene2d.util.ValueLabelBuilder;
 public class HUDStage extends Stage {
     
     private static final StringBuilder Text = new StringBuilder();
-    private static final float ButtonSpacing = 8;
     
     private TagManager<Tag> tagManager;
     private GridController gridController;
@@ -57,6 +56,7 @@ public class HUDStage extends Stage {
     private HUDConfig config;
     
     private final Table container;
+    private final Table header;
     private final Button[] buttons;
     private float buttonRatio;
     
@@ -83,9 +83,7 @@ public class HUDStage extends Stage {
         
         addListener(new KeyPressListener());
         
-        Table header = createHeader();
-        Table cellCounters = createCellCounters();
-        
+        header = createHeader();
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
             Button button = new Button(skin, text().append("button").append(number).toString());
@@ -98,28 +96,35 @@ public class HUDStage extends Stage {
         container.pad(config.getFloat(Padding));
         
         container.add(header).colspan(3).expandY().bottom();
-        container.row();
-        container.add();
-        container.add(cellCounters).fillX();
-        container.add();
 
         container.row();
-        container.add(buttons[0]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).right();
+        container.add(buttons[0]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).right();
         container.add();
-        container.add(buttons[2]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).space(ButtonSpacing).left();
+        container.add(buttons[2]).size(floatValue(this::calculateButtonSize), floatValue(this::calculateButtonLength)).left();
         
         container.row();
         container.add();
-        container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).space(ButtonSpacing).top();
+        container.add(buttons[1]).size(floatValue(this::calculateButtonLength), floatValue(this::calculateButtonSize)).top();
         container.add();
         
         addActor(container);
         updateValueLabels = true;
+        
+        container.debugAll();
     }
     
     // FIXME Somehow this breaks when the screen height is much bigger than the screen width
     private float calculateButtonLength() {
-        return getWidth() / (1 + 2 * buttonRatio) - container.getPadLeft() - container.getPadRight() - 2 * ButtonSpacing;
+        float availableWidth = getWidth() - container.getPadLeft() - container.getPadRight();
+        float availableHeight = getHeight() - header.getPrefHeight() - container.getPadTop() - container.getPadBottom();
+        
+        float length;
+        if (availableWidth < availableHeight) {
+            length = availableWidth / (2 * buttonRatio + 1);
+        } else {
+            length = availableHeight / (buttonRatio + 1);
+        }
+        return length;
     }
     
     private float calculateButtonSize() {
@@ -127,13 +132,18 @@ public class HUDStage extends Stage {
     }
     
     private Table createHeader() {
-        int spacing = 5;
-        Table header = new Table(skin);
-        header.add(hudMessages.get("score") + ":", "big").expandX().right().padRight(spacing);
-        header.add(ValueLabelBuilder.newLabel(skin, "big").updateIf(this::updateValueLabels)
+        Table scoreLabel = new Table(skin);
+        scoreLabel.add(hudMessages.get("score") + ":", "big").expandX().right().padRight(5);
+        scoreLabel.add(ValueLabelBuilder.newLabel(skin, "big").updateIf(this::updateValueLabels)
                                                           .withValue(() -> text().append(gameState.getScore()).toString())
-                                    .build())
-              .expandX().left();
+                                        .build())
+                  .expandX().left();
+        Table cellCounters = createCellCounters();
+        
+        Table header = new Table(skin);
+        header.add(scoreLabel);
+        header.row();
+        header.add(cellCounters);
         return header;
     }
 
@@ -232,7 +242,7 @@ public class HUDStage extends Stage {
     
     public float getTopHeight() {
         container.validate();
-        return container.getRowHeight(0) + container.getRowHeight(1) + container.getPadTop();
+        return container.getRowHeight(0) + container.getPadTop();
     }
     
     public float getBottomHeight() {
