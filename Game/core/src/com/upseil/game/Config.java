@@ -92,7 +92,7 @@ public final class Config {
     public static class MenuConfig extends EnumerizedJsonBasedProperties<MenuConfigValues> {
 
         public MenuConfig(JsonValue json) {
-            super(json, MenuConfigValues.class);
+            super(json, true, MenuConfigValues.class);
         }
         
     }
@@ -100,7 +100,7 @@ public final class Config {
     public static class HUDConfig extends EnumerizedJsonBasedProperties<HUDConfigValues> {
         
         public HUDConfig(JsonValue json) {
-            super(json, HUDConfigValues.class);
+            super(json, true, HUDConfigValues.class);
         }
         
     }
@@ -108,7 +108,7 @@ public final class Config {
     public static class GridConfig extends EnumerizedJsonBasedProperties<GridConfigValues> {
         
         public GridConfig(JsonValue json) {
-            super(json, GridConfigValues.class);
+            super(json, true, GridConfigValues.class);
         }
         
     }
