@@ -7,6 +7,10 @@ public class CellsAddedEvent extends AbstractEvent<CellsAddedEvent> {
     
     public static final EventType<CellsAddedEvent> Type = new EventType<>("Cells Added");
     
+    public CellsAddedEvent() {
+        super(Type);
+    }
+    
     private int count;
 
     public int getCount() {
@@ -17,11 +21,6 @@ public class CellsAddedEvent extends AbstractEvent<CellsAddedEvent> {
         this.count = count;
     }
 
-    @Override
-    protected void setType() {
-        this.type = Type;
-    }
-    
     @Override
     public void reset() {
         super.reset();

@@ -8,6 +8,10 @@ public class CellsRemovedEvent extends AbstractEvent<CellsRemovedEvent> {
     public static final EventType<CellsRemovedEvent> Type = new EventType<>("Cells Removed");
     
     private int count;
+    
+    public CellsRemovedEvent() {
+        super(Type);
+    }
 
     public int getCount() {
         return count;
@@ -15,11 +19,6 @@ public class CellsRemovedEvent extends AbstractEvent<CellsRemovedEvent> {
 
     public void setCount(int count) {
         this.count = count;
-    }
-
-    @Override
-    protected void setType() {
-        this.type = Type;
     }
     
     @Override

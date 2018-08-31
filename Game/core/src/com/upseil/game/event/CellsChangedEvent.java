@@ -7,9 +7,8 @@ public class CellsChangedEvent extends AbstractEvent<CellsChangedEvent> {
     
     public static final EventType<CellsChangedEvent> Type = new EventType<>("Cells Changed");
     
-    @Override
-    protected void setType() {
-        this.type = Type;
+    public CellsChangedEvent() {
+        super(Type);
     }
     
 }
