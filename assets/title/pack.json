@@ -4,7 +4,7 @@
 	paddingY: 2,
 	stripWhitespaceX: true,
 	stripWhitespaceY: true,
-	filterMin: Nearest,
-	filterMag: Nearest,
+	filterMin: MipMap,
+	filterMag: MipMap,
 	silent: true
 }

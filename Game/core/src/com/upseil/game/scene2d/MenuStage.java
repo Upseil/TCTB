@@ -113,6 +113,10 @@ public class MenuStage extends Stage {
             this.width = backgroundWhiteRegion.originalWidth;
             this.height = backgroundWhiteRegion.originalHeight;
             
+            if (this.width > worldWidth) {
+                this.setScale((worldWidth - 2 * TitleTopPadding) / this.width);
+            }
+            
             float slope = (float) height / (backgroundWhiteRegion.packedWidth + backgroundBlackRegion.packedWidth - width);
 
             float backgroundWhiteStartX = worldWidth * -1.0f;
@@ -176,7 +180,7 @@ public class MenuStage extends Stage {
                 Stage stage = getStage();
                 stageWidth = stage.getWidth();
                 stageHeight = stage.getHeight();
-                setPosition((stageWidth - width) / 2, stageHeight - height - TitleTopPadding);
+                setPosition((stageWidth - getPrefWidth()) / 2, stageHeight - getPrefHeight() - TitleTopPadding);
             }
         }
         
@@ -186,12 +190,12 @@ public class MenuStage extends Stage {
 
         @Override
         public float getPrefWidth() {
-            return width;
+            return width * getScaleX();
         }
 
         @Override
         public float getPrefHeight() {
-            return height;
+            return height * getScaleY();
         }
 
         @Override

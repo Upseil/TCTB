@@ -15,7 +15,6 @@ import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -84,9 +83,8 @@ public class HUDStage extends Stage {
         
         addListener(new KeyPressListener());
         
-        container = new Table(skin);
-        container.setFillParent(true);
-        container.pad(config.getFloat(Padding));
+        Table header = createHeader();
+        Table cellCounters = createCellCounters();
         
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
@@ -95,11 +93,14 @@ public class HUDStage extends Stage {
             buttons[number] = button;
         }
         
-        container.add(createHeader()).colspan(3).expandY().bottom();
-
+        container = new Table(skin);
+        container.setFillParent(true);
+        container.pad(config.getFloat(Padding));
+        
+        container.add(header).colspan(3).expandY().bottom();
         container.row();
         container.add();
-        container.add(createCellCounters()).fillX();
+        container.add(cellCounters).fillX();
         container.add();
 
         container.row();
@@ -125,7 +126,7 @@ public class HUDStage extends Stage {
         return calculateButtonLength() * buttonRatio;
     }
     
-    private Actor createHeader() {
+    private Table createHeader() {
         int spacing = 5;
         Table header = new Table(skin);
         header.add(hudMessages.get("score") + ":", "big").expandX().right().padRight(spacing);
