@@ -2,6 +2,7 @@
     "menu": {
         "titleAnimation": true,
         
+        "gridSize": 30,
         "cellSize": 30,
         "cellSpacing": 5,
         "cellMoveSpeed": 500,

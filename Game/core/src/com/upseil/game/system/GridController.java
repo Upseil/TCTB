@@ -69,7 +69,7 @@ public class GridController extends BaseSystem {
     
     private GameGrid grid;
     
-    private boolean updateScreenSize;
+    private boolean screenSizeChanged;
     private boolean resetGrid;
     private boolean lost;
     private float grayness;
@@ -85,7 +85,7 @@ public class GridController extends BaseSystem {
     
     @Override
     protected void initialize() {
-        world.getSystem(EventSystem.class).registerHandler(ResizeEvent.Type, e -> updateScreenSize = true);
+        world.getSystem(EventSystem.class).registerHandler(ResizeEvent.Type, e -> onScreenSizeChanged());
         
         GameConfig gameConfig = world.getRegistered("Config");
         config = gameConfig.getGridConfig();
@@ -125,17 +125,12 @@ public class GridController extends BaseSystem {
         timeScaleAlterationDuration = 0;
         timeScaleAlterationTime = 0;
     }
-
-    public int getExpectedColorCount() {
-        int expectedColorCount = (grid.getGridWidth() * grid.getGridHeight()) / Color.size();
-        return expectedColorCount;
-    }
     
     @Override
     protected void processSystem() {
-        if (updateScreenSize) {
-            updateScreenSize();
-            updateScreenSize = false;
+        if (screenSizeChanged) {
+            adjustToScreenSize();
+            screenSizeChanged = false;
         }
         
         if (resetGrid) {
@@ -236,8 +231,12 @@ public class GridController extends BaseSystem {
         timeScaleInterpolation = startTimeScale < targetTimeScale ? timeScaleIncreaseInterpolation
                                                                   : timeScaleDecreaseInterpolation;
     }
+    
+    public void onScreenSizeChanged() {
+        screenSizeChanged = true;
+    }
 
-    public void updateScreenSize() {
+    private void adjustToScreenSize() {
         HUDStage hud = getHUD();
         
         int padding = config.getInt(GridPadding);
@@ -248,6 +247,11 @@ public class GridController extends BaseSystem {
         
         screenPadding.pad(top, left, bottom, right);
         gridScene.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+    }
+
+    public int getExpectedColorCount() {
+        int expectedColorCount = (grid.getGridWidth() * grid.getGridHeight()) / Color.size();
+        return expectedColorCount;
     }
     
     public int getColorCount(int colorNumber) {

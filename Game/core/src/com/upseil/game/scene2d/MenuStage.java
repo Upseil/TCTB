@@ -4,6 +4,7 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
 import static com.upseil.game.Config.MenuConfigValues.GlassAlpha;
+import static com.upseil.game.Config.MenuConfigValues.GridSize;
 import static com.upseil.game.Config.MenuConfigValues.TitleAnimation;
 
 import com.artemis.ComponentMapper;
@@ -31,10 +32,12 @@ import com.upseil.game.Constants.Tag;
 import com.upseil.game.GameApplication;
 import com.upseil.game.math.Swing2Out;
 import com.upseil.game.scene2d.MenuGridBackground.MenuGridBackgroundStyle;
+import com.upseil.game.system.GridController;
 import com.upseil.gdx.artemis.component.Ignore;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.SimpleChangeListener;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
+import com.upseil.gdx.scene2d.util.SimpleGenericValue;
 
 @Wire
 public class MenuStage extends Stage {
@@ -78,6 +81,7 @@ public class MenuStage extends Stage {
             ignoreMapper.create(tagManager.getEntityId(Tag.Menu));
             ignoreMapper.remove(tagManager.getEntityId(Tag.Grid));
             ignoreMapper.remove(tagManager.getEntityId(Tag.HUD));
+            world.getSystem(GridController.class).onScreenSizeChanged();
         }));
         
         Button exitButton = null;
@@ -89,7 +93,7 @@ public class MenuStage extends Stage {
         
         Table controls = new Table(skin);
         controls.setFillParent(true);
-        controls.top().padTop(TitleTopPadding + title.getPrefHeight() + ControlsTopPadding);
+        controls.top().padTop(new SimpleGenericValue(() -> TitleTopPadding + title.getPrefHeight() + ControlsTopPadding));
         
         controls.defaults().space(25).fillX();
         controls.add(startGameButton);
@@ -101,8 +105,8 @@ public class MenuStage extends Stage {
         background = new Image(BackgroundBuilder.byColor(skin, "white"));
         background.setSize(width, height);
         MenuGridBackgroundStyle gridStyle = new MenuGridBackgroundStyle(config);
-        grid = new MenuGridBackground(world, gridStyle, GameApplication.Random, width, height);
-        grid.setPosition((width - grid.getWorldWidth()) / 2, (height- grid.getWorldHeight()) / 2);
+        grid = new MenuGridBackground(world, gridStyle, GameApplication.Random, config.getInt(GridSize));
+        grid.setScale(width / grid.getWorldWidth(), height / grid.getWorldHeight());
         glass = new Image(BackgroundBuilder.byColor(skin, "black", config.getFloat(GlassAlpha)));
         glass.setSize(width, height);
 
@@ -140,7 +144,7 @@ public class MenuStage extends Stage {
     private void sizeChanged(float newWidth, float newHeight) {
         background.setSize(newWidth, newHeight);
         glass.setSize(newWidth, newHeight);
-        // TODO Adjust grid
+        grid.setScale(newWidth / grid.getWorldWidth(), newHeight / grid.getWorldHeight());
         title.invalidate();
     }
     
@@ -238,7 +242,14 @@ public class MenuStage extends Stage {
         public void layout() {
             if (getActions().size == 0) {
                 Stage stage = getStage();
-                setPosition((stage.getWidth() - getPrefWidth()) / 2, stage.getHeight() - getPrefHeight() - TitleTopPadding);
+                float worldWidth = stage.getWidth();
+                float worldHeight = stage.getHeight();
+                
+                setScale(1);
+                if (this.width > worldWidth) {
+                    setScale((worldWidth - 2 * TitleTopPadding) / this.width);
+                }
+                setPosition((worldWidth - getPrefWidth()) / 2, worldHeight - getPrefHeight() - TitleTopPadding);
             }
         }
         
@@ -248,11 +259,13 @@ public class MenuStage extends Stage {
 
         @Override
         public float getPrefWidth() {
+            validate();
             return width * getScaleX();
         }
 
         @Override
         public float getPrefHeight() {
+            validate();
             return height * getScaleY();
         }
 

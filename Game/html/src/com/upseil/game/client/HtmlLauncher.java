@@ -1,11 +1,12 @@
 package com.upseil.game.client;
 
-import static com.upseil.game.Constants.GameInit.FixedSize;
+import static com.upseil.game.Constants.GameInit.Height;
 import static com.upseil.game.Constants.GameInit.MinHeight;
 import static com.upseil.game.Constants.GameInit.MinWidth;
 import static com.upseil.game.Constants.GameInit.PrefHeight;
 import static com.upseil.game.Constants.GameInit.PrefWidth;
 import static com.upseil.game.Constants.GameInit.Title;
+import static com.upseil.game.Constants.GameInit.Width;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
@@ -37,13 +38,47 @@ import com.upseil.gdx.util.properties.Properties;
 public class HtmlLauncher extends GwtApplication {
     
     public interface SavegameMapper extends ObjectMapper<Savegame> { }
+
+    private static final String AutoHorizontalMargin = "auto-horizontal-margin";
+    private static final String AutoVerticalMargin = "auto-vertical-margin";
     
     private static final Properties<GameInit> GameInit = Properties.fromPropertiesText(Resources.Instance.gameInitText().getText(), GameInit.class);
     
+    private float widthHeightRatio = -1;
+    private int minWidth;
+    private int minHeight;
+    private int prefWidth;
+    private int prefHeight;
+    
+    private int width;
+    private int height;
+    
     @Override
     public void onModuleLoad() {
-        if (!GameInit.getBoolean(FixedSize)) {
-            Window.enableScrolling(false);
+        if (GameInit.contains(Width) && GameInit.contains(Height)) {
+            minWidth = GameInit.getInt(Width);
+            minHeight = GameInit.getInt(Height);
+            prefWidth = minWidth;
+            prefHeight = minHeight;
+            widthHeightRatio = (float) minWidth / minHeight;
+        } else {
+            minWidth = GameInit.getInt(MinWidth, 0);
+            minHeight = GameInit.getInt(MinHeight, 0);
+            if (minWidth > 0 && minHeight > 0) {
+                widthHeightRatio = (float) minWidth / minHeight;
+            }
+            
+            prefWidth = GameInit.getInt(PrefWidth, Integer.MAX_VALUE);
+            prefHeight = GameInit.getInt(PrefHeight, Integer.MAX_VALUE);
+            if (prefWidth == Integer.MAX_VALUE && prefHeight == Integer.MAX_VALUE) {
+                if (minWidth > minHeight) {
+                    prefHeight = toHeight(prefWidth);
+                } else {
+                    prefWidth = toWidth(prefHeight);
+                }
+            } else {
+                widthHeightRatio = (float) prefWidth / prefHeight; 
+            }
         }
         super.onModuleLoad();
     }
@@ -57,10 +92,7 @@ public class HtmlLauncher extends GwtApplication {
             }
             @Override
             public void afterSetup() {
-                // TODO Handle resizing for fixed size applications using min/pref/max width/height
-                if (!GameInit.getBoolean(FixedSize)) {
-                    setupResizing();
-                }
+                setupResizing();
             }
         });
         
@@ -76,14 +108,28 @@ public class HtmlLauncher extends GwtApplication {
     }
     
     private void setupResizing() {
-        getRootPanel().setWidth("100%");
-        getRootPanel().setHeight("100%");
-        
         Window.setMargin("0");
         Window.addResizeHandler(new ResizeHandler() {
             @Override
             public void onResize(ResizeEvent event) {
-                getGraphics().setWindowedMode(event.getWidth(), event.getHeight());
+                int clientWidth = event.getWidth();
+                int clientHeight = event.getHeight();
+                calculateSize(clientWidth, clientHeight);
+                Window.enableScrolling(width > clientWidth || height > clientHeight);
+                getGraphics().setWindowedMode(width, height);
+                
+                Panel rootPanel = getRootPanel();
+                rootPanel.setSize(width + "px", height + "px");
+                if (width > clientWidth) {
+                    rootPanel.removeStyleName(AutoHorizontalMargin);
+                } else {
+                    rootPanel.addStyleName(AutoHorizontalMargin);
+                }
+                if (height > clientHeight) {
+                    rootPanel.removeStyleName(AutoVerticalMargin);
+                } else {
+                    rootPanel.addStyleName(AutoVerticalMargin);
+                }
             }
         });
     }
@@ -92,30 +138,39 @@ public class HtmlLauncher extends GwtApplication {
     public GwtApplicationConfiguration getConfig() {
         int clientWidth = Window.getClientWidth();
         int clientHeight = Window.getClientHeight();
+        calculateSize(clientWidth, clientHeight);
         
-        int width, height;
-        if (GameInit.getBoolean(FixedSize)) {
-            width = GameInit.getInt(PrefWidth);
-            height = GameInit.getInt(PrefHeight);
-            if (width > clientWidth) {
-                float ratio = (float) height / width;
-                width = Math.max(clientWidth, GameInit.getInt(MinWidth));
-                height = (int) (width * ratio);
-            } 
-            if (height > clientHeight) {
-                float ratio = (float) width / height;
-                height = Math.max(clientHeight, GameInit.getInt(MinHeight));
-                width = (int) (height * ratio);
-            }
-        } else {
-            width = clientWidth;
-            height = clientHeight;
+        Window.enableScrolling(width > clientWidth || height > clientHeight);
+        Panel rootPanel = createGamePanel(width, height);
+        if (width <= clientWidth) {
+            rootPanel.addStyleName(AutoHorizontalMargin);
+        }
+        if (height <= clientHeight) {
+            rootPanel.addStyleName(AutoVerticalMargin);
         }
         
         GwtApplicationConfiguration configuration = new GwtApplicationConfiguration(width, height);
         configuration.preferFlash = false;
-        configuration.rootPanel = createGamePanel(width, height);
+        configuration.rootPanel = rootPanel;
         return configuration;
+    }
+
+    private void calculateSize(int clientWidth, int clientHeight) {
+        if (widthHeightRatio <= 0) {
+            width = clientWidth;
+            height = clientHeight;
+        } else {
+            width = prefWidth;
+            height = prefHeight;
+            if (width > clientWidth) {
+                width = Math.max(clientWidth, minWidth);
+                height = toHeight(width);
+            } 
+            if (height > clientHeight) {
+                height = Math.max(clientHeight, minHeight);
+                width = toWidth(height);
+            }
+        }
     }
 
     private Panel createGamePanel(int width, int height) {
@@ -132,8 +187,8 @@ public class HtmlLauncher extends GwtApplication {
                 super.onBrowserEvent(event);
             }
         };
-        gamePanel.setWidth("" + width + "px");
-        gamePanel.setHeight("" + height + "px");
+        gamePanel.setWidth(width + "px");
+        gamePanel.setHeight(height + "px");
         gamePanel.addStyleName("root");
         RootPanel.get().add(gamePanel);
         return gamePanel;
@@ -155,6 +210,20 @@ public class HtmlLauncher extends GwtApplication {
                 // TODO Add some kind of loading state
             }           
         };
+    }
+    
+    private int toHeight(int width) {
+        if (widthHeightRatio <= 0) {
+            return width;
+        }
+        return Math.round(width / widthHeightRatio);
+    }
+    
+    private int toWidth(int height) {
+        if (widthHeightRatio <= 0) {
+            return height;
+        }
+        return Math.round(height * widthHeightRatio);
     }
     
 }

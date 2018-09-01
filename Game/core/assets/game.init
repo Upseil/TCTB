@@ -1,7 +1,20 @@
 title=Stay Colorful
 
-fixedSize=true
-minWidth=400
-minHeight=400
-prefWidth=1000
-prefHeight=1000
+# width/height for static size
+# Overwrites any min/max values
+# Forces resizable to false
+#width=1000
+#height=1000
+
+# It's still possible that the application may be resized.
+# For example if run in the browser, which is always resizable
+# or if the screen size is smaller than the preferred size.
+resizable=true
+
+# Resizable within a range
+# Missing minWidth/minHeight default to 0
+# Missing prefWidth/prefHeight default to Integer.MAX_VALUE
+minWidth=600
+minHeight=600
+prefWidth=1200
+prefHeight=1200

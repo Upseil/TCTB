@@ -13,7 +13,7 @@ public final class Config {
     public enum MenuConfigValues {
         TitleAnimation,
         // Background Grid
-        CellSize, CellSpacing, CellMoveSpeed,
+        GridSize, CellSize, CellSpacing, CellMoveSpeed,
             // Entrance Animation
             MaxAdditionalStripeInDelay, MaxAdditionalFadeInDelay, FadeInDuration, MaxAdditionalScaleInDelay, ScaleInDuration,
         GlassAlpha

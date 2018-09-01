@@ -24,8 +24,8 @@ public class MenuGridBackground extends AbstractGrid {
     
     private final MenuGridBackgroundStyle style;
 
-    public MenuGridBackground(World world, MenuGridBackgroundStyle style, ExtendedRandom random, float worldWidth, float worldHeight) {
-        super(world, style, random, (int) Math.ceil(Math.max(worldWidth, worldHeight) / style.paddedCellSize));
+    public MenuGridBackground(World world, MenuGridBackgroundStyle style, ExtendedRandom random, int size) {
+        super(world, style, random, size);
         this.style = style;
     }
 
