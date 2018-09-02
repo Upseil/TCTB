@@ -5,10 +5,10 @@ import static com.upseil.game.Constants.GameInit.MinHeight;
 import static com.upseil.game.Constants.GameInit.MinWidth;
 import static com.upseil.game.Constants.GameInit.PrefHeight;
 import static com.upseil.game.Constants.GameInit.PrefWidth;
-import static com.upseil.game.Constants.GameInit.Title;
 import static com.upseil.game.Constants.GameInit.Width;
 
 import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.ApplicationLogger;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
 import com.badlogic.gdx.backends.gwt.GwtApplicationConfiguration;
 import com.badlogic.gdx.backends.gwt.preloader.Preloader.PreloaderCallback;
@@ -16,23 +16,31 @@ import com.badlogic.gdx.backends.gwt.preloader.Preloader.PreloaderState;
 import com.github.nmorel.gwtjackson.client.JsonDeserializationContext;
 import com.github.nmorel.gwtjackson.client.JsonSerializationContext;
 import com.github.nmorel.gwtjackson.client.ObjectMapper;
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.upseil.game.Constants.GameInit;
 import com.upseil.game.GameApplication;
 import com.upseil.game.Savegame;
 import com.upseil.game.SerializationContext;
+import com.upseil.game.domain.Color;
 import com.upseil.gdx.gwt.serialization.HtmlCompressingMapper;
 import com.upseil.gdx.gwt.util.BrowserConsoleLogger;
+import com.upseil.gdx.util.format.DoubleFormatter;
+import com.upseil.gdx.util.format.DoubleFormatter.Format;
 import com.upseil.gdx.util.properties.Properties;
 
 public class HtmlLauncher extends GwtApplication {
@@ -55,6 +63,9 @@ public class HtmlLauncher extends GwtApplication {
     
     @Override
     public void onModuleLoad() {
+        super.setApplicationLogger(new BrowserConsoleLogger());
+        setLogLevel(LOG_INFO);
+        
         if (GameInit.contains(Width) && GameInit.contains(Height)) {
             minWidth = GameInit.getInt(Width);
             minHeight = GameInit.getInt(Height);
@@ -84,11 +95,15 @@ public class HtmlLauncher extends GwtApplication {
     }
     
     @Override
+    public void setApplicationLogger(ApplicationLogger applicationLogger) {
+        // No-op to prevent that the browser console logger is overwritten by super.onModuleLoad()
+    }
+    
+    @Override
     public ApplicationListener createApplicationListener() {
         setLoadingListener(new LoadingListener() {
             @Override
             public void beforeSetup() {
-                setApplicationLogger(new BrowserConsoleLogger());
             }
             @Override
             public void afterSetup() {
@@ -196,18 +211,53 @@ public class HtmlLauncher extends GwtApplication {
     
     @Override
     public PreloaderCallback getPreloaderCallback() {
-        final Label title = new Label(GameInit.get(Title));
-        title.addStyleName("game-title");
-        getRootPanel().add(title);
+        FlowPanel dotContainer = new FlowPanel();
+        dotContainer.addStyleName("loading-dot-container");
+
+        DotLoadingAnimation[] dotAnimations = new DotLoadingAnimation[Color.size()];
+        for (int i = 0; i < dotAnimations.length; i++) {
+            String color = "var(--color" + i + ")";
+            
+            SimplePanel dot = new SimplePanel();
+            dot.setSize("0%", "0%");
+            dot.addStyleName("loading-dot");
+            dot.getElement().getStyle().setBackgroundColor(color);
+            
+            SimplePanel dotWithBorder = new SimplePanel(dot);
+            dotWithBorder.addStyleName("loading-dot-border");
+            dotWithBorder.getElement().getStyle().setBorderColor(color);
+            
+            dotContainer.add(dotWithBorder);
+            dotAnimations[i] = new DotLoadingAnimation(dot.getElement());
+        }
         
+        Label label = new Label("Loading");
+        label.addStyleName("loading-label");
+        
+        VerticalPanel container = new VerticalPanel();
+        container.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+        container.addStyleName("loading-container");
+        container.add(label);
+        container.add(dotContainer);
+        getRootPanel().add(container);
+        
+        float progressStep = 1.0f / dotAnimations.length;
         return new PreloaderCallback() {
             @Override
-            public void error (String file) {
-                System.out.println("error: " + file);
+            public void error(String file) {
+                HtmlLauncher.this.error("Preloading error", file);
             }
             @Override
-            public void update (PreloaderState state) {
-                // TODO Add some kind of loading state
+            public void update(PreloaderState state) {
+                float progress = state.getProgress();
+                log("Preload Progress", progress + "");
+                
+                for (int i = 0; i < dotAnimations.length; i++) {
+                    DotLoadingAnimation animation = dotAnimations[i];
+                    float dotProgress = Math.max(0, progress - i * progressStep) / progressStep;
+                    dotProgress = Math.min(dotProgress, 1);
+                    animation.setTargetProgress(dotProgress);
+                }
             }           
         };
     }
@@ -224,6 +274,43 @@ public class HtmlLauncher extends GwtApplication {
             return height;
         }
         return Math.round(height * widthHeightRatio);
+    }
+    
+    private static class DotLoadingAnimation extends Animation {
+        
+        private static final int Duration = 250;
+        
+        private final Element element;
+        
+        private double startProgress;
+        private double targetProgress;
+
+        public DotLoadingAnimation(Element element) {
+            this.element = element;
+        }
+        
+        public void setTargetProgress(double targetProgress) {
+            String elementWidth = element.getStyle().getWidth();
+            this.startProgress = Double.parseDouble(elementWidth.substring(0, elementWidth.length() - 1));
+            this.targetProgress = targetProgress;
+            if (this.startProgress < this.targetProgress) {
+                run(Duration, element);
+            }
+        }
+
+        @Override
+        protected void onUpdate(double animationProgress) {
+            DoubleFormatter percentFormatter = DoubleFormatter.get(Format.Percent);
+            double loadingProgress = startProgress + (targetProgress - startProgress) * animationProgress;
+            String size = percentFormatter.apply(loadingProgress);
+            String margin = percentFormatter.apply(1 - loadingProgress);
+            
+            Style style = element.getStyle();
+            style.setProperty("width", size);
+            style.setProperty("height", size);
+            style.setProperty("margin", margin + " " + margin + " 0 0");
+        }
+        
     }
     
 }

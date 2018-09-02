@@ -3,6 +3,12 @@
 	src: url('VisOpenSans.woff') format('woff');
 }
 
+:root {
+    --color0: #1BA1E2;
+    --color1: #DA3E3E;
+    --color2: #61ED61;
+}
+
 canvas {
     cursor: default;
     outline: none;
@@ -31,13 +37,35 @@ body {
     margin-bottom: auto;
 }
 
-.game-title {
+.loading-container {
+    width: 100%;
+    padding-top: 10%;
+}
+
+.loading-label {
 	font-family: VisOpenSans;
 	font-size: 5em;
 	color: white;
 	
 	text-align: center;
-	padding-top: 10%;
+}
+
+.loading-dot-container {
+    margin-top: 20px;
+}
+
+.loading-dot-border {
+    width: 75px;
+    height: 75px;
+    display: inline-block;
+    
+    border: 10px solid;
+    border-radius: 20px;
+    margin: 0 5px;
+}
+
+.loading-dot {
+    border-top-right-radius: 8px;
 }
 
 .clipboard-background {
@@ -78,7 +106,7 @@ body {
 	color: white;
 }
 
-.fade-in{
+.fade-in {
 	animation: opacity 0.4s
 }
 @keyframes opacity{
