@@ -16,7 +16,6 @@ import com.badlogic.gdx.backends.gwt.preloader.Preloader.PreloaderState;
 import com.github.nmorel.gwtjackson.client.JsonDeserializationContext;
 import com.github.nmorel.gwtjackson.client.JsonSerializationContext;
 import com.github.nmorel.gwtjackson.client.ObjectMapper;
-import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -214,8 +213,8 @@ public class HtmlLauncher extends GwtApplication {
         FlowPanel dotContainer = new FlowPanel();
         dotContainer.addStyleName("loading-dot-container");
 
-        DotLoadingAnimation[] dotAnimations = new DotLoadingAnimation[Color.size()];
-        for (int i = 0; i < dotAnimations.length; i++) {
+        Element[] dots = new Element[Color.size()];
+        for (int i = 0; i < dots.length; i++) {
             String color = "var(--color" + i + ")";
             
             SimplePanel dot = new SimplePanel();
@@ -228,7 +227,7 @@ public class HtmlLauncher extends GwtApplication {
             dotWithBorder.getElement().getStyle().setBorderColor(color);
             
             dotContainer.add(dotWithBorder);
-            dotAnimations[i] = new DotLoadingAnimation(dot.getElement());
+            dots[i] = dot.getElement();
         }
         
         Label label = new Label("Loading");
@@ -241,7 +240,7 @@ public class HtmlLauncher extends GwtApplication {
         container.add(dotContainer);
         getRootPanel().add(container);
         
-        float progressStep = 1.0f / dotAnimations.length;
+        float progressStep = 1.0f / dots.length;
         return new PreloaderCallback() {
             @Override
             public void error(String file) {
@@ -251,12 +250,20 @@ public class HtmlLauncher extends GwtApplication {
             public void update(PreloaderState state) {
                 float progress = state.getProgress();
                 log("Preload Progress", progress + "");
-                
-                for (int i = 0; i < dotAnimations.length; i++) {
-                    DotLoadingAnimation animation = dotAnimations[i];
+
+                DoubleFormatter percentFormatter = DoubleFormatter.get(Format.Percent);
+                for (int i = 0; i < dots.length; i++) {
+                    Element dot = dots[i];
                     float dotProgress = Math.max(0, progress - i * progressStep) / progressStep;
                     dotProgress = Math.min(dotProgress, 1);
-                    animation.setTargetProgress(dotProgress);
+
+                    String size = percentFormatter.apply(dotProgress);
+                    String margin = percentFormatter.apply(1 - dotProgress);
+                    
+                    Style style = dot.getStyle();
+                    style.setProperty("width", size);
+                    style.setProperty("height", size);
+                    style.setProperty("margin", margin + " " + margin + " 0 0");
                 }
             }           
         };
@@ -274,43 +281,6 @@ public class HtmlLauncher extends GwtApplication {
             return height;
         }
         return Math.round(height * widthHeightRatio);
-    }
-    
-    private static class DotLoadingAnimation extends Animation {
-        
-        private static final int Duration = 250;
-        
-        private final Element element;
-        
-        private double startProgress;
-        private double targetProgress;
-
-        public DotLoadingAnimation(Element element) {
-            this.element = element;
-        }
-        
-        public void setTargetProgress(double targetProgress) {
-            String elementWidth = element.getStyle().getWidth();
-            this.startProgress = Double.parseDouble(elementWidth.substring(0, elementWidth.length() - 1));
-            this.targetProgress = targetProgress;
-            if (this.startProgress < this.targetProgress) {
-                run(Duration, element);
-            }
-        }
-
-        @Override
-        protected void onUpdate(double animationProgress) {
-            DoubleFormatter percentFormatter = DoubleFormatter.get(Format.Percent);
-            double loadingProgress = startProgress + (targetProgress - startProgress) * animationProgress;
-            String size = percentFormatter.apply(loadingProgress);
-            String margin = percentFormatter.apply(1 - loadingProgress);
-            
-            Style style = element.getStyle();
-            style.setProperty("width", size);
-            style.setProperty("height", size);
-            style.setProperty("margin", margin + " " + margin + " 0 0");
-        }
-        
     }
     
 }
