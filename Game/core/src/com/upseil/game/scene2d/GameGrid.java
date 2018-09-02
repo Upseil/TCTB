@@ -49,6 +49,7 @@ import com.upseil.gdx.pool.pair.PooledPair;
 import com.upseil.gdx.util.EnumMap;
 import com.upseil.gdx.util.GDXArrays;
 
+// TODO extend AbstractGrid
 public class GameGrid extends Group {
     
     private final World world;
@@ -154,7 +155,7 @@ public class GameGrid extends Group {
         for (int x = 0; x < getGridWidth(); x++) {
             for (int y = 0; y < getGridHeight(); y++) {
                 if (cells[x][y] == null) {
-                    createAndSetCell(x, y, Color.random(random.asRandom()));
+                    createAndSetCell(x, y, Color.random(random));
                 }
             }
         }
@@ -255,7 +256,7 @@ public class GameGrid extends Group {
         int spawnX = context.moveLeft() ? getGridWidth()  : context.moveRight() ? -1 : gridX;
         int spawnY = context.moveDown() ? getGridHeight() : context.moveUp()    ? -1 : gridY;
         while (!context.moveToNextLine(gridX, gridY)) {
-            CellActor newCell = createCell(spawnX, spawnY, Color.random(random.asRandom()));
+            CellActor newCell = createCell(spawnX, spawnY, Color.random(random));
             cells[gridX][gridY] = newCell;
             newCells.add(newCell);
             queuedMovements.add(createLinearMoveToAction(newCell, toWorld(gridX), toWorld(gridY)));
@@ -571,7 +572,7 @@ public class GameGrid extends Group {
             Direction fromOpposite = from.getOpposite();
             int fillX = fromOpposite == Direction.Left ? 0 : fromOpposite == Direction.Right ? getGridWidth() - 1 : cellX;
             int fillY = fromOpposite == Direction.Bottom ? 0 : fromOpposite == Direction.Top ? getGridHeight() - 1 : cellY;
-            CellActor fillCell = createCell(fillX + fromOpposite.getDeltaX(), fillY + fromOpposite.getDeltaY(), Color.random(random.asRandom()));
+            CellActor fillCell = createCell(fillX + fromOpposite.getDeltaX(), fillY + fromOpposite.getDeltaY(), Color.random(random));
             fillCell.addAction(delay(moveDuration + 2 * style.teleportDelay, moveTo(toWorld(fillX), toWorld(fillY), moveDuration)));
             shiftLine(from.isHorizontal() ? cellY : cellX, from, style.teleportMoveSpeed, moveDuration + 2 * style.teleportDelay);
             cells[fillX][fillY] = fillCell;
@@ -590,8 +591,8 @@ public class GameGrid extends Group {
     }
     
     private void shiftLine(int number, Direction direction, float movementSpeed, float delay) {
-        int cellX =   direction == Direction.Left ? 0 : direction == Direction.Right ? getGridWidth() - 1 : number;
-        int cellY =   direction == Direction.Bottom ? 0 : direction == Direction.Top ? getGridHeight() - 1 : number;
+        int cellX = direction ==   Direction.Left ? 0 : direction == Direction.Right ? getGridWidth() - 1  : number;
+        int cellY = direction == Direction.Bottom ? 0 : direction ==   Direction.Top ? getGridHeight() - 1 : number;
 
         float moveDuration = style.paddedCellSize / movementSpeed;
         for (int i = direction.isHorizontal() ? getGridWidth() : getGridHeight(); i > 0; i--) {

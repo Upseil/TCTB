@@ -16,6 +16,9 @@ public final class Config {
         GridSize, CellSize, CellSpacing, CellMoveSpeed,
             // Entrance Animation
             MaxAdditionalStripeInDelay, MaxAdditionalFadeInDelay, FadeInDuration, MaxAdditionalScaleInDelay, ScaleInDuration,
+            // Action Animation
+            GridActionInterval, ShiftLineChance, MaxConcurrentActions, MaxAdditionalActionDelay, GridActionDuration,
+            ShakesPerAction, ShakeRotation, RumblesPerAction, RumbleDistance, SpinsPerAction,
         GlassAlpha
     }
     

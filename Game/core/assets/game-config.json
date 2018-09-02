@@ -2,10 +2,10 @@
     "menu": {
         "titleAnimation": true,
         
-        "gridSize": 30,
+        "gridSize": 20,
         "cellSize": 30,
         "cellSpacing": 5,
-        "cellMoveSpeed": 500,
+        "cellMoveSpeed": 350,
         
         "maxAdditionalStripeInDelay": 0,
         "maxAdditionalFadeInDelay": 0.75,
@@ -13,6 +13,16 @@
         "maxAdditionalScaleInDelay": 0.75,
         "scaleInDuration": 0.5,
         
+        "gridActionInterval": 1.25,
+        "shiftLineChance": 0.5,
+        "maxConcurrentActions": 10,
+        "maxAdditionalActionDelay": 0.75,
+        "gridActionDuration": 1,
+        "shakesPerAction": 8,
+        "shakeRotation": 5,
+        "rumblesPerAction": 16,
+        "rumbleDistance": 2,
+        "spinsPerAction": 0.5,
         
         "glassAlpha": 0.7
     },

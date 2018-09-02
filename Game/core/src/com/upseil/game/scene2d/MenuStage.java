@@ -122,7 +122,7 @@ public class MenuStage extends Stage {
                     moveTo(title.getX(), getHeight() - title.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
             
             controls.getColor().a = 0;
-            controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration)));
+            controls.addAction(delay(title.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration, Interpolation.fade)));
 
             grid.randomEntrance(title.getAnimationDuration() + ControlsFadeInDelay + ControlsFadeInDuration);
         }
@@ -228,7 +228,7 @@ public class MenuStage extends Stage {
         private Image createFadeInImage(AtlasRegion region, float delay, float duration) {
             Image image = createAlignedImage(region);
             image.getColor().a = 0;
-            image.addAction(delay(delay, fadeIn(duration)));
+            image.addAction(delay(delay, fadeIn(duration, Interpolation.fade)));
             return image;
         }
         

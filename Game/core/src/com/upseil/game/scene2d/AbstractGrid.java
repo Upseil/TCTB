@@ -39,7 +39,7 @@ public class AbstractGrid extends Group {
         for (int x = 0; x < getGridWidth(); x++) {
             for (int y = 0; y < getGridHeight(); y++) {
                 if (cells[x][y] == null) {
-                    createAndSetCell(x, y, Color.random(random.asRandom()));
+                    createAndSetCell(x, y, Color.random(random));
                 }
             }
         }
@@ -56,6 +56,10 @@ public class AbstractGrid extends Group {
         cell.setPosition(toWorld(x), toWorld(y));
         cellGroup.addActor(cell);
         return cell;
+    }
+    
+    public boolean isInsideGrid(int gridX, int gridY) {
+        return gridX >= 0 && gridX < getGridWidth() && gridY >= 0 && gridY < getGridHeight();
     }
     
     protected CellActor getCell(int x, int y) {

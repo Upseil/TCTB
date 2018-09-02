@@ -1,5 +1,6 @@
 package com.upseil.game.scene2d;
 
+import com.badlogic.gdx.graphics.Colors;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
@@ -11,12 +12,10 @@ import com.upseil.gdx.scene2d.util.BackgroundBuilder;
 public class CellActor extends Image implements Pooled<CellActor> {
     
     private Pool<CellActor> pool;
-    
-    private Skin skin;
     private Color color;
     
     public CellActor initialize(Skin skin, Color color, float size) {
-        this.skin = skin;
+        setDrawable(BackgroundBuilder.byColor(skin, "white"));
         setCellColor(color);
         setSize(size, size);
         setOrigin(Align.center);
@@ -29,7 +28,7 @@ public class CellActor extends Image implements Pooled<CellActor> {
 
     public void setCellColor(Color color) {
         this.color = color;
-        setDrawable(BackgroundBuilder.byColor(this.skin, color.getName()));
+        setColor(Colors.get(color.getName()));
     }
     
     @Override
@@ -61,14 +60,13 @@ public class CellActor extends Image implements Pooled<CellActor> {
     @Override
     public void reset() {
         pool = null;
-        skin = null;
         color = null;
         clear();
         setDrawable(null);
         setSize(0, 0);
         setOrigin(Align.bottomLeft);
         setPosition(0, 0);
-        getColor().a = 1;
+        setColor(com.badlogic.gdx.graphics.Color.WHITE);
         setScale(1);
     }
     

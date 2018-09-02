@@ -1,6 +1,6 @@
 package com.upseil.game.domain;
 
-import java.util.Random;
+import com.upseil.gdx.math.ExtendedRandom;
 
 public enum Color {
     Empty(null, -3), Black("t-black", -2), White("t-white", -1),
@@ -22,8 +22,8 @@ public enum Color {
         return number;
     }
     
-    public static Color random(Random random) {
-        return forNumber(random.nextInt(size()));
+    public static Color random(ExtendedRandom random) {
+        return forNumber(random.randomIntExclusive(size()));
     }
     
     public static Color forNumber(int number) {
