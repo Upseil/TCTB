@@ -13,14 +13,14 @@
         "maxAdditionalScaleInDelay": 0.75,
         "scaleInDuration": 0.5,
         
-        "gridActionInterval": 1.25,
+        "gridActionInterval": 5,
         "shiftLineChance": 0.5,
         "maxConcurrentActions": 10,
-        "maxAdditionalActionDelay": 0.75,
+        "maxAdditionalActionDelay": 4,
         "gridActionDuration": 1,
-        "shakesPerAction": 8,
+        "shakesPerAction": 6,
         "shakeRotation": 5,
-        "rumblesPerAction": 16,
+        "rumblesPerAction": 12,
         "rumbleDistance": 2,
         "spinsPerAction": 0.5,
         
