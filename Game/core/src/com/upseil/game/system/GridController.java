@@ -14,7 +14,6 @@ import static com.upseil.game.Config.GridConfigValues.TimeScaleIncreaseInterpola
 
 import com.artemis.BaseSystem;
 import com.artemis.ComponentMapper;
-import com.artemis.Entity;
 import com.artemis.EntityEdit;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Gdx;
@@ -39,6 +38,7 @@ import com.upseil.gdx.artemis.component.Ignore;
 import com.upseil.gdx.artemis.component.InputHandler;
 import com.upseil.gdx.artemis.component.Layer;
 import com.upseil.gdx.artemis.component.Scene;
+import com.upseil.gdx.artemis.component.Screen;
 import com.upseil.gdx.artemis.event.ResizeEvent;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
@@ -54,6 +54,7 @@ public class GridController extends BaseSystem {
     private TagManager<Tag> tagManager;
     private LayeredSceneRenderSystem<?> renderSystem;
     private ComponentMapper<Scene> sceneMapper;
+    private ComponentMapper<Screen> screenMapper;
 
     @Wire(name="Skin") private Skin skin;
     private GridConfig config;
@@ -101,18 +102,18 @@ public class GridController extends BaseSystem {
         PartialWorldViewport gridViewport = new PartialScalingViewport(screenPadding, Scaling.fit, worldSize, worldSize);
         Stage gridStage = new Stage(gridViewport, world.getSystem(LayeredSceneRenderSystem.class).getGlobalBatch());
         
-        Entity gridEntity = world.createEntity();
-        EntityEdit gridEdit = gridEntity.edit();
-        gridEdit.create(Ignore.class);
-        gridEdit.create(Layer.class).setZIndex(Layers.World.getZIndex());
-        gridEdit.create(InputHandler.class).setProcessor(gridStage);
-        gridScene = gridEdit.create(Scene.class).initialize(gridStage);
+        EntityEdit gridEntity = world.createEntity().edit();
+        gridEntity.create(Ignore.class);
+        gridEntity.create(Layer.class).setZIndex(Layers.World.getZIndex());
+        gridEntity.create(InputHandler.class).setProcessor(gridStage);
+        gridScene = gridEntity.create(Scene.class).initialize(gridStage);
 
         grid = new GameGrid(world, GameApplication.Random, config.getFloat(ExclusionAreaSize));
-        gridEdit.create(ActorComponent.class).set(grid);
+        gridEntity.create(ActorComponent.class).set(grid);
         gridScene.addActor(grid);
 
-        tagManager.register(Tag.Grid, gridEntity);
+        tagManager.register(Tag.Grid, gridEntity.getEntityId());
+        screenMapper.get(tagManager.getEntityId(Tag.GameScreen)).addScene(gridEntity.getEntityId());
         
         resetGrid = false;
         lost = false;
@@ -250,6 +251,10 @@ public class GridController extends BaseSystem {
     }
 
     public int getExpectedColorCount() {
+        if (grid == null) {
+            return 0;
+        }
+        
         int expectedColorCount = (grid.getGridWidth() * grid.getGridHeight()) / Color.size();
         return expectedColorCount;
     }

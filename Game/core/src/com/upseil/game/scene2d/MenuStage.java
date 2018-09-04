@@ -7,7 +7,6 @@ import static com.upseil.game.Config.MenuConfigValues.GlassAlpha;
 import static com.upseil.game.Config.MenuConfigValues.GridSize;
 import static com.upseil.game.Config.MenuConfigValues.TitleAnimation;
 
-import com.artemis.ComponentMapper;
 import com.artemis.World;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Application.ApplicationType;
@@ -33,7 +32,9 @@ import com.upseil.game.GameApplication;
 import com.upseil.game.math.Swing2Out;
 import com.upseil.game.scene2d.MenuGridBackground.MenuGridBackgroundStyle;
 import com.upseil.game.system.GridController;
-import com.upseil.gdx.artemis.component.Ignore;
+import com.upseil.gdx.action.Action;
+import com.upseil.gdx.artemis.component.Screen;
+import com.upseil.gdx.artemis.system.ScreenManager;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.scene2d.SimpleChangeListener;
 import com.upseil.gdx.scene2d.util.BackgroundBuilder;
@@ -50,10 +51,12 @@ public class MenuStage extends Stage {
     private static final float ControlsFadeInDuration = 1f;
 
     private TagManager<Tag> tagManager;
-    private ComponentMapper<Ignore> ignoreMapper;
+    private ScreenManager screenManager;
     
     @Wire(name="Skin") private Skin skin;
     @Wire(name="UI") private I18NBundle hudMessages;
+    
+    private final World world;
     
     private final Actor background;
     private final MenuGridBackground grid;
@@ -66,6 +69,7 @@ public class MenuStage extends Stage {
     public MenuStage(Viewport viewport, Batch batch, World world) {
         super(viewport, batch);
         world.inject(this);
+        this.world = world;
         
         GameConfig gameConfig = world.getRegistered("Config");
         MenuConfig config = gameConfig.getMenuConfig();
@@ -77,12 +81,7 @@ public class MenuStage extends Stage {
         title = new TitleGroup(width, titleAnimation);
         
         Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
-        startGameButton.addListener(new SimpleChangeListener(() -> {
-            ignoreMapper.create(tagManager.getEntityId(Tag.Menu));
-            ignoreMapper.remove(tagManager.getEntityId(Tag.Grid));
-            ignoreMapper.remove(tagManager.getEntityId(Tag.HUD));
-            world.getSystem(GridController.class).onScreenSizeChanged();
-        }));
+        startGameButton.addListener(new SimpleChangeListener(this::startGame));
         
         Button exitButton = null;
         ApplicationType applicationType = Gdx.app.getType();
@@ -126,6 +125,22 @@ public class MenuStage extends Stage {
 
             grid.randomEntrance(title.getAnimationDuration() + ControlsFadeInDelay + ControlsFadeInDuration);
         }
+    }
+    
+    private void startGame() {
+        screenManager.setScreen(tagManager.getEntityId(Tag.GameScreen));
+    }
+
+    public Action<Screen, ?> getEntranceAction() {
+        // TODO
+        return null;
+    }
+
+    public Action<Screen, ?> getExitAction() {
+        return Action.Unsafe(deltaTime -> {
+            world.getSystem(GridController.class).onScreenSizeChanged();
+            return true;
+        });
     }
     
     @Override

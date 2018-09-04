@@ -22,6 +22,7 @@ import com.upseil.gdx.artemis.system.ClearScreenSystem;
 import com.upseil.gdx.artemis.system.EventSystem;
 import com.upseil.gdx.artemis.system.LayeredInputSystem;
 import com.upseil.gdx.artemis.system.LayeredSceneRenderSystem;
+import com.upseil.gdx.artemis.system.ScreenManager;
 import com.upseil.gdx.artemis.system.TagManager;
 import com.upseil.gdx.math.ExtendedRandom;
 import com.upseil.gdx.math.ExtendedRandomXS128;
@@ -71,8 +72,9 @@ public class GameApplication extends ArtemisApplicationAdapter {
     protected World createWorld() {
         WorldConfiguration worldConfiguration = new WorldConfigurationBuilder()
                 .with(new AllSubscriptionMisplacementWorkaround())
-                
+
                 .with(new TagManager<Tag>())
+                .with(new ScreenManager())
                 .with(new GameInitializer())
                 
                 .with(new LoadSystem(serializationContext.getSavegameMapper(), config.getSavegameConfig()))

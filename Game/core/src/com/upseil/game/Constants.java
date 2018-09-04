@@ -7,7 +7,7 @@ public final class Constants {
     }
 
     public static enum Tag {
-        GameState, Grid, HUD, Menu
+        GameState, GameScreen, MenuScreen, Grid, HUD, Menu
     }
 
     public static enum Layers {

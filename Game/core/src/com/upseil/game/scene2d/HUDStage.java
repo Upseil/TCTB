@@ -16,6 +16,7 @@ import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -23,6 +24,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.Value;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -57,6 +59,7 @@ public class HUDStage extends Stage {
     private HUDConfig config;
     
     private final Table container;
+    private final CellCountersWidth cellCountersWidth;
     private final Table header;
     private final Button[] buttons;
     private final float buttonRatio;
@@ -86,6 +89,7 @@ public class HUDStage extends Stage {
         
         addListener(new KeyPressListener());
         
+        cellCountersWidth = new CellCountersWidth("default");
         header = createHeader();
         buttons = new Button[3];
         for (int number = 0; number < Color.size(); number++) {
@@ -149,14 +153,6 @@ public class HUDStage extends Stage {
     private Table createCellCounters() {
         float spacing = 5;
         float counterSize = config.getFloat(CounterSize);
-        int expectedColorCount = gridController.getExpectedColorCount();
-        StringBuilder dummyText = text().append('0'); // One more than expected
-        do {
-            dummyText.append('0');
-            expectedColorCount /= 10;
-        } while (expectedColorCount != 0);
-        Label widthProvider = new Label(dummyText.toString(), skin, "default");
-        float minWidth = widthProvider.getPrefWidth();
         
         Table cellCounters = new Table(skin);
         for (int n = 0; n < Color.size(); n++) {
@@ -167,7 +163,7 @@ public class HUDStage extends Stage {
                                               .updateIf(this::updateValueLabels)
                                               .withValue(() -> text(getTextColor(number)).append(gridController.getColorCount(number)).toString())
                                           .build())
-                        .expandX().right().minWidth(minWidth);
+                        .expandX().right().minWidth(cellCountersWidth);
             cellCounters.add(ValueLabelBuilder.newLabel(skin, "default")
                                               .updateIf(this::updateValueLabels)
                                               .withValue(() -> text(getTextColor(number)).append("x").toString())
@@ -203,6 +199,7 @@ public class HUDStage extends Stage {
     @Override
     public void act(float delta) {
         gameState = gameStateMapper.get(tagManager.getEntityId(Tag.GameState));
+        cellCountersWidth.setExpectedColorCount(gridController.getExpectedColorCount());
         super.act(delta);
         if (updateValueLabels) {
             updateButtonsDisabled();
@@ -247,6 +244,34 @@ public class HUDStage extends Stage {
     public float getBottomHeight() {
         container.validate();
         return container.getRowHeight(container.getRows() - 1) + container.getPadBottom();
+    }
+    
+    private class CellCountersWidth extends Value {
+        
+        private final Label dummy;
+        private int expectedColorCount;
+        
+        public CellCountersWidth(String styleName) {
+            dummy = new Label("00", skin, styleName);
+        }
+
+        public void setExpectedColorCount(int expectedColorCount) {
+            if (this.expectedColorCount != expectedColorCount) {
+                this.expectedColorCount = expectedColorCount;
+                StringBuilder dummyText = text().append('0'); // One more than expected
+                do {
+                    dummyText.append('0');
+                    expectedColorCount /= 10;
+                } while (expectedColorCount != 0);
+                dummy.setText(dummyText.toString());
+            }
+        }
+
+        @Override
+        public float get(Actor context) {
+            return dummy.getPrefWidth();
+        }
+        
     }
     
     private class KeyPressListener extends SimpleKeyInputListener {
