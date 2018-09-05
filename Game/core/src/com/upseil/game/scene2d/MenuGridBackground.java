@@ -80,7 +80,7 @@ public class MenuGridBackground extends AbstractGrid {
         if (entranceDuration <= 0) {
             actionAccumulator += delta;
             if (actionAccumulator >= style.actionInterval) {
-                actionAccumulator -= style.actionInterval;
+                actionAccumulator = actionAccumulator % style.actionInterval;
                 randomAction();
             }
         }
