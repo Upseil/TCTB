@@ -24,7 +24,7 @@
 		
 		t-disabled: t-medium-light,
 		
-		t-screen-background: {hex: #4D4D4D},
+		t-screen-background: {hex: #5D5D5D},
 		
 		t-color0:			{hex: #1BA1E2},
 		t-color0-medium:	{hex: #4095BF},

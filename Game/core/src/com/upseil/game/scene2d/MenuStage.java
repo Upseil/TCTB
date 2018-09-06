@@ -91,6 +91,7 @@ public class MenuStage extends Stage {
             exitButton.addListener(new SimpleChangeListener(() -> Gdx.app.exit()));
         }
         
+        // TODO Bigger buttons
         Table controls = new Table(skin);
         controls.setFillParent(true);
         controls.top().padTop(new SimpleGenericValue(() -> TitleTopPadding + title.getPrefHeight() + ControlsTopPadding));
@@ -102,10 +103,10 @@ public class MenuStage extends Stage {
             controls.add(exitButton);
         }
         
-        Color screenBackground = skin.getColor("t-screen-background");
+        Color screenBackgroundColor = skin.getColor("t-screen-background");
         float glassAlpha = config.getFloat(GlassAlpha);
         float inverseGlassAlpha = 1 / (1 - glassAlpha);
-        Color backgroundColor = screenBackground.cpy().mul(inverseGlassAlpha);
+        Color backgroundColor = screenBackgroundColor.cpy().mul(inverseGlassAlpha);
         
         background = new Image(BackgroundBuilder.byColor(skin, backgroundColor));
         background.setSize(width, height);

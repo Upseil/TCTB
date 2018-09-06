@@ -79,7 +79,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8284271"
-     inkscape:cx="120.20697"
+     inkscape:cx="144.77893"
      inkscape:cy="58.168393"
      inkscape:document-units="px"
      inkscape:current-layer="layer-background"
@@ -160,13 +160,13 @@
      transform="translate(0,-259.56143)"
      style="display:inline">
     <path
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.48911816;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="fill:#f8f8f8;fill-opacity:1;stroke:none;stroke-width:0.48911816;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="M 0,259.56143 H 70.802499 L 23.01875,296.99997 H 0 Z"
        id="background-white"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc" />
     <path
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.48911816;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="fill:#141414;fill-opacity:1;stroke:none;stroke-width:0.48911816;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="m 70.802499,259.56143 h 22.59542 v 37.43854 H 23.01875 Z"
        id="background-black"
        inkscape:connector-curvature="0"

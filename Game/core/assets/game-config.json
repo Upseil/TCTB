@@ -24,7 +24,7 @@
         "rumbleDistance": 2,
         "spinsPerAction": 0.5,
         
-        "glassAlpha": 0.3
+        "glassAlpha": 0.15
     },
     "HUD": {
         "padding": 10,
