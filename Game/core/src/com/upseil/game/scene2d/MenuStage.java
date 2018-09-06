@@ -11,6 +11,7 @@ import com.artemis.World;
 import com.artemis.annotations.Wire;
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
@@ -101,12 +102,17 @@ public class MenuStage extends Stage {
             controls.add(exitButton);
         }
         
-        background = new Image(BackgroundBuilder.byColor(skin, "white"));
+        Color screenBackground = skin.getColor("t-screen-background");
+        float glassAlpha = config.getFloat(GlassAlpha);
+        float inverseGlassAlpha = 1 / (1 - glassAlpha);
+        Color backgroundColor = screenBackground.cpy().mul(inverseGlassAlpha);
+        
+        background = new Image(BackgroundBuilder.byColor(skin, backgroundColor));
         background.setSize(width, height);
         MenuGridBackgroundStyle gridStyle = new MenuGridBackgroundStyle(config);
         grid = new MenuGridBackground(world, gridStyle, GameApplication.Random, config.getInt(GridSize));
         grid.setScale(width / grid.getWorldWidth(), height / grid.getWorldHeight());
-        glass = new Image(BackgroundBuilder.byColor(skin, "black", config.getFloat(GlassAlpha)));
+        glass = new Image(BackgroundBuilder.byColor(skin, "black", glassAlpha));
         glass.setSize(width, height);
 
         addActor(background);
