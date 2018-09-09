@@ -11,7 +11,10 @@ import com.upseil.gdx.util.GDXUtil;
 public final class Config {
     
     public enum MenuConfigValues {
-        TitleAnimation,
+        // Logo Animation
+        LogoAnimation, FlyInDelay, FlyInDuration, BackgroundAlpha, BackgroundFadeOutDuration,
+        AdditionalOutlinesFadeInDelay, OutlinesFadeInDuration, FillingsFadeInDuration,
+        MaxAdditionalFillingsFadeInDelay, BackgroundBlurFadeInDuration, ShadowFadeInDuration,
         // Background Grid
         GridSize, CellSize, CellSpacing, CellMoveSpeed,
             // Entrance Animation

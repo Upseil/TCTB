@@ -1,7 +1,9 @@
 {
 	duplicatePadding: false,
-	paddingX: 2,
-	paddingY: 2,
+	maxWidth: 2048,
+	maxHeight: 2048,
+	paddingX: 5,
+	paddingY: 5,
 	stripWhitespaceX: true,
 	stripWhitespaceY: true,
 	filterMin: MipMap,

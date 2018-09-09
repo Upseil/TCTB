@@ -6,183 +6,120 @@ filter: MipMap,MipMap
 repeat: none
 background-black
   rotate: false
-  xy: 5, 217
+  xy: 764, 218
   size: 530, 289
   orig: 703, 289
   offset: 173, 0
   index: -1
+background-blur
+  rotate: false
+  xy: 5, 167
+  size: 754, 340
+  orig: 754, 340
+  offset: 0, 0
+  index: -1
 background-white
   rotate: false
-  xy: 540, 217
+  xy: 1299, 218
   size: 530, 289
   orig: 703, 289
   offset: 0, 0
   index: -1
 filling-_c_olorful
   rotate: false
-  xy: 1075, 390
+  xy: 1834, 391
   size: 97, 116
   orig: 703, 289
   offset: 20, 21
   index: -1
 filling-_s_tay
   rotate: false
-  xy: 1075, 269
+  xy: 1138, 97
   size: 95, 116
   orig: 703, 289
   offset: 153, 152
   index: -1
 filling-c_o_lorful
   rotate: false
-  xy: 1278, 416
+  xy: 1936, 417
   size: 93, 90
   orig: 703, 289
   offset: 133, 20
   index: -1
 filling-co_l_orful
   rotate: false
-  xy: 1931, 389
+  xy: 1474, 96
   size: 28, 117
   orig: 703, 289
   offset: 240, 23
   index: -1
 filling-col_o_rful
   rotate: false
-  xy: 406, 122
+  xy: 1238, 123
   size: 92, 90
   orig: 703, 289
   offset: 283, 20
   index: -1
 filling-colo_r_ful
   rotate: false
-  xy: 5, 5
+  xy: 1228, 5
   size: 61, 85
   orig: 703, 289
   offset: 394, 23
   index: -1
 filling-color_f_ul
   rotate: false
-  xy: 1654, 388
+  xy: 1335, 95
   size: 65, 118
   orig: 703, 289
   offset: 470, 23
   index: -1
 filling-colorf_u_l
   rotate: false
-  xy: 1564, 419
+  xy: 1138, 5
   size: 85, 87
   orig: 703, 289
   offset: 545, 21
   index: -1
 filling-colorfu_l_
   rotate: false
-  xy: 1964, 389
+  xy: 1507, 96
   size: 27, 117
   orig: 703, 289
   offset: 652, 23
   index: -1
 filling-s_t_ay
   rotate: false
-  xy: 1793, 396
+  xy: 1405, 103
   size: 64, 110
   orig: 703, 289
   offset: 256, 152
   index: -1
 filling-st_a_y
   rotate: false
-  xy: 503, 123
+  xy: 675, 73
   size: 84, 89
   orig: 703, 289
   offset: 329, 152
   index: -1
 filling-sta_y_
   rotate: false
-  xy: 208, 97
+  xy: 1834, 271
   size: 95, 115
   orig: 703, 289
   offset: 421, 123
   index: -1
-shadow-_c_olorful
+outlines-colorful
   rotate: false
-  xy: 5, 95
-  size: 97, 117
+  xy: 5, 37
+  size: 665, 125
   orig: 703, 289
-  offset: 22, 18
+  offset: 17, 18
   index: -1
-shadow-_s_tay
+outlines-stay
   rotate: false
-  xy: 107, 96
-  size: 96, 116
+  xy: 764, 64
+  size: 369, 149
   orig: 703, 289
-  offset: 155, 149
-  index: -1
-shadow-c_o_lorful
-  rotate: false
-  xy: 308, 122
-  size: 93, 90
-  orig: 703, 289
-  offset: 135, 18
-  index: -1
-shadow-co_l_orful
-  rotate: false
-  xy: 1175, 269
-  size: 27, 116
-  orig: 703, 289
-  offset: 243, 21
-  index: -1
-shadow-col_o_rful
-  rotate: false
-  xy: 1376, 416
-  size: 93, 90
-  orig: 703, 289
-  offset: 285, 18
-  index: -1
-shadow-colo_r_ful
-  rotate: false
-  xy: 682, 128
-  size: 62, 84
-  orig: 703, 289
-  offset: 396, 21
-  index: -1
-shadow-color_f_ul
-  rotate: false
-  xy: 1724, 389
-  size: 64, 117
-  orig: 703, 289
-  offset: 473, 21
-  index: -1
-shadow-colorf_u_l
-  rotate: false
-  xy: 592, 125
-  size: 85, 87
-  orig: 703, 289
-  offset: 547, 18
-  index: -1
-shadow-colorfu_l_
-  rotate: false
-  xy: 1996, 390
-  size: 28, 116
-  orig: 703, 289
-  offset: 654, 21
-  index: -1
-shadow-s_t_ay
-  rotate: false
-  xy: 1862, 396
-  size: 64, 110
-  orig: 703, 289
-  offset: 258, 150
-  index: -1
-shadow-st_a_y
-  rotate: false
-  xy: 1474, 417
-  size: 85, 89
-  orig: 703, 289
-  offset: 331, 149
-  index: -1
-shadow-sta_y_
-  rotate: false
-  xy: 1177, 391
-  size: 96, 115
-  orig: 703, 289
-  offset: 423, 121
+  offset: 150, 121
   index: -1

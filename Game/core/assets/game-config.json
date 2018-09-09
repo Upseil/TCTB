@@ -1,6 +1,16 @@
 {
     "menu": {
-        "titleAnimation": true,
+        "logoAnimation": true,
+        "flyInDelay": 0.5,
+        "flyInDuration": 1.5,
+        "additionalOutlinesFadeInDelay": 0.1,
+        "outlinesFadeInDuration": 1,
+        "maxAdditionalFillingsFadeInDelay": 1,
+        "fillingsFadeInDuration": 1,
+        "backgroundBlurFadeInDuration": 1,
+        "shadowFadeInDuration": 0.75,
+        "backgroundAlpha": 0.7,
+        "backgroundFadeOutDuration": 0.75,
         
         "gridSize": 20,
         "cellSize": 30,
@@ -24,7 +34,7 @@
         "rumbleDistance": 2,
         "spinsPerAction": 0.5,
         
-        "glassAlpha": 0.15
+        "glassAlpha": 0.3
     },
     "HUD": {
         "padding": 10,
