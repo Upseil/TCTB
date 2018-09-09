@@ -12,6 +12,13 @@
         "backgroundAlpha": 0.7,
         "backgroundFadeOutDuration": 0.75,
         
+        "logoTopPadding": 75,
+        "logoHorizontalPadding": 200,
+        "logoMoveDuration": 1,
+        "controlsFadeInDelay": 0.5,
+        "controlsFadeInDuration": 1,
+        "controlsTopPadding": 100,
+        
         "gridSize": 20,
         "cellSize": 30,
         "cellSpacing": 5,

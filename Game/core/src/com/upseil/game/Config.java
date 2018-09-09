@@ -15,6 +15,9 @@ public final class Config {
         LogoAnimation, FlyInDelay, FlyInDuration, BackgroundAlpha, BackgroundFadeOutDuration,
         AdditionalOutlinesFadeInDelay, OutlinesFadeInDuration, FillingsFadeInDuration,
         MaxAdditionalFillingsFadeInDelay, BackgroundBlurFadeInDuration, ShadowFadeInDuration,
+        // Menu Style
+        LogoTopPadding, LogoHorizontalPadding, LogoMoveDuration, ControlsFadeInDelay, ControlsFadeInDuration,
+        ControlsTopPadding,
         // Background Grid
         GridSize, CellSize, CellSpacing, CellMoveSpeed,
             // Entrance Animation

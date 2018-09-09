@@ -4,7 +4,25 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.alpha;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.delay;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
-import static com.upseil.game.Config.MenuConfigValues.*;
+import static com.upseil.game.Config.MenuConfigValues.AdditionalOutlinesFadeInDelay;
+import static com.upseil.game.Config.MenuConfigValues.BackgroundAlpha;
+import static com.upseil.game.Config.MenuConfigValues.BackgroundBlurFadeInDuration;
+import static com.upseil.game.Config.MenuConfigValues.BackgroundFadeOutDuration;
+import static com.upseil.game.Config.MenuConfigValues.ControlsFadeInDelay;
+import static com.upseil.game.Config.MenuConfigValues.ControlsFadeInDuration;
+import static com.upseil.game.Config.MenuConfigValues.ControlsTopPadding;
+import static com.upseil.game.Config.MenuConfigValues.FillingsFadeInDuration;
+import static com.upseil.game.Config.MenuConfigValues.FlyInDelay;
+import static com.upseil.game.Config.MenuConfigValues.FlyInDuration;
+import static com.upseil.game.Config.MenuConfigValues.GlassAlpha;
+import static com.upseil.game.Config.MenuConfigValues.GridSize;
+import static com.upseil.game.Config.MenuConfigValues.LogoAnimation;
+import static com.upseil.game.Config.MenuConfigValues.LogoHorizontalPadding;
+import static com.upseil.game.Config.MenuConfigValues.LogoMoveDuration;
+import static com.upseil.game.Config.MenuConfigValues.LogoTopPadding;
+import static com.upseil.game.Config.MenuConfigValues.MaxAdditionalFillingsFadeInDelay;
+import static com.upseil.game.Config.MenuConfigValues.OutlinesFadeInDuration;
+import static com.upseil.game.Config.MenuConfigValues.ShadowFadeInDuration;
 
 import com.artemis.World;
 import com.artemis.annotations.Wire;
@@ -33,7 +51,6 @@ import com.upseil.game.Constants.Tag;
 import com.upseil.game.GameApplication;
 import com.upseil.game.math.Swing2Out;
 import com.upseil.game.scene2d.MenuGridBackground.MenuGridBackgroundStyle;
-import com.upseil.game.scene2d.MenuStage.LogoGroup.AnimationStyle;
 import com.upseil.game.system.GridController;
 import com.upseil.gdx.action.Action;
 import com.upseil.gdx.artemis.component.Screen;
@@ -46,13 +63,6 @@ import com.upseil.gdx.scene2d.util.SimpleGenericValue;
 @Wire
 public class MenuStage extends Stage {
     
-    private static final float TitleTopPadding = 50;
-    private static final float TitleMoveDuration = 1f;
-    
-    private static final float ControlsTopPadding = 100;
-    private static final float ControlsFadeInDelay = TitleMoveDuration / 2;
-    private static final float ControlsFadeInDuration = 1f;
-
     private TagManager<Tag> tagManager;
     private ScreenManager screenManager;
     
@@ -60,6 +70,7 @@ public class MenuStage extends Stage {
     @Wire(name="UI") private I18NBundle hudMessages;
     
     private final World world;
+    private final MenuStyle style;
     
     private final Actor background;
     private final MenuGridBackground grid;
@@ -76,11 +87,11 @@ public class MenuStage extends Stage {
         
         GameConfig gameConfig = world.getRegistered("Config");
         MenuConfig config = gameConfig.getMenuConfig();
-        width = viewport.getWorldWidth();
-        height = viewport.getWorldHeight();
+        style = new MenuStyle(config);
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
         
-        AnimationStyle logoAnimationStyle = config.getBoolean(LogoAnimation) ? new LogoGroup.AnimationStyle(config) : LogoGroup.AnimationStyle.NoAnimation;
-        logo = new LogoGroup(width, logoAnimationStyle);
+        logo = new LogoGroup(worldWidth, LogoGroup.AnimationStyle.from(config));
         
         Button startGameButton = new TextButton(hudMessages.get("startGame"), skin, "menu2");
         startGameButton.addListener(new SimpleChangeListener(this::startGame));
@@ -95,7 +106,7 @@ public class MenuStage extends Stage {
         // TODO Bigger buttons
         Table controls = new Table(skin);
         controls.setFillParent(true);
-        controls.top().padTop(new SimpleGenericValue(() -> TitleTopPadding + logo.getPrefHeight() + ControlsTopPadding));
+        controls.top().padTop(new SimpleGenericValue(() -> style.logoTopPadding + logo.getPrefHeight() + style.controlsTopPadding));
         
         controls.defaults().space(25).fillX();
         controls.add(startGameButton);
@@ -110,28 +121,34 @@ public class MenuStage extends Stage {
         Color backgroundColor = screenBackgroundColor.cpy().mul(inverseGlassAlpha);
         
         background = new Image(BackgroundBuilder.byColor(skin, backgroundColor));
-        background.setSize(width, height);
-        MenuGridBackgroundStyle gridStyle = new MenuGridBackgroundStyle(config);
-        grid = new MenuGridBackground(world, gridStyle, GameApplication.Random, config.getInt(GridSize));
-        grid.setScale(width / grid.getWorldWidth(), height / grid.getWorldHeight());
+        grid = new MenuGridBackground(world, new MenuGridBackgroundStyle(config), GameApplication.Random, config.getInt(GridSize));
         glass = new Image(BackgroundBuilder.byColor(skin, "black", glassAlpha));
-        glass.setSize(width, height);
 
         addActor(background);
         addActor(grid);
         addActor(glass);
         addActor(controls);
         addActor(logo);
+        
+        sizeChanged(worldWidth, worldHeight);
+        width = worldWidth;
+        height = worldHeight;
 
         if (config.getBoolean(LogoAnimation)) {
-            logo.setPosition((width - logo.getPrefWidth()) / 2, (height - logo.getPrefHeight()) / 2);
-            logo.addAction(delay(logo.getAnimationDuration(),
-                    moveTo(logo.getX(), getHeight() - logo.getPrefHeight() - TitleTopPadding, TitleMoveDuration, Interpolation.swing)));
+            float logoAnimationDuration = logo.getAnimationDuration();
+            
+            logo.setPosition((worldWidth - logo.getPrefWidth()) / 2, (worldHeight - logo.getPrefHeight()) / 2);
+            logo.addAction(
+                delay(
+                    logoAnimationDuration,
+                    moveTo(logo.getX(), getHeight() - logo.getPrefHeight() - style.logoTopPadding, style.logoMoveDuration, Interpolation.swing)
+                )
+            );
             
             controls.getColor().a = 0;
-            controls.addAction(delay(logo.getAnimationDuration() + ControlsFadeInDelay, fadeIn(ControlsFadeInDuration, Interpolation.fade)));
+            controls.addAction(delay(logoAnimationDuration + style.controlsFadeInDelay, fadeIn(style.controlsFadeInDuration, Interpolation.fade)));
 
-            grid.randomEntrance(logo.getAnimationDuration() + ControlsFadeInDelay + ControlsFadeInDuration);
+            grid.randomEntrance(logoAnimationDuration + style.controlsFadeInDelay + style.controlsFadeInDuration);
         }
     }
     
@@ -168,13 +185,47 @@ public class MenuStage extends Stage {
         background.setSize(newWidth, newHeight);
         glass.setSize(newWidth, newHeight);
         grid.setScale(newWidth / grid.getWorldWidth(), newHeight / grid.getWorldHeight());
-        logo.invalidate();
+
+        if (logo.getActions().size <= 0) {
+            float paddedLogoMaxWidth = logo.getMaxWidth() + 2 * style.logoHorizontalPadding;
+            logo.setScale(Math.min(newWidth / paddedLogoMaxWidth, 1));
+            
+            float newLogoX = (newWidth - logo.getPrefWidth()) / 2;
+            float newLogoY = newHeight - logo.getPrefHeight() - style.logoTopPadding;
+            logo.setPosition(newLogoX, newLogoY);
+        }
     }
     
     @Override
     public void dispose() {
         super.dispose();
         logo.dispose();
+    }
+    
+    private static class MenuStyle {
+        
+        public final float logoTopPadding;
+        public final float logoHorizontalPadding;
+        public final float logoMoveDuration;
+        public final float controlsTopPadding;
+        public final float controlsFadeInDelay;
+        public final float controlsFadeInDuration;
+        
+        public MenuStyle(MenuConfig config) {
+            this(config.getFloat(LogoTopPadding), config.getFloat(LogoHorizontalPadding), config.getFloat(LogoMoveDuration), config.getFloat(ControlsTopPadding),
+                    config.getFloat(ControlsFadeInDelay), config.getFloat(ControlsFadeInDuration));
+        }
+        
+        public MenuStyle(float logoTopPadding, float logoHorizontalPadding, float logoMoveDuration, float controlsTopPadding, float controlsFadeInDelay,
+                float controlsFadeInDuration) {
+            this.logoTopPadding = logoTopPadding;
+            this.logoHorizontalPadding = logoHorizontalPadding;
+            this.logoMoveDuration = logoMoveDuration;
+            this.controlsTopPadding = controlsTopPadding;
+            this.controlsFadeInDelay = controlsFadeInDelay;
+            this.controlsFadeInDuration = controlsFadeInDuration;
+        }
+        
     }
     
     // TODO Extract
@@ -197,10 +248,6 @@ public class MenuStage extends Stage {
             atlas = new TextureAtlas("title/title.atlas");
             this.width = atlas.getRegions().get(0).originalWidth;
             this.height = atlas.getRegions().get(0).originalHeight;
-            
-            if (this.width > worldWidth) {
-                this.setScale((worldWidth - 2 * TitleTopPadding) / this.width);
-            }
             
             regionMap = new ObjectMap<>();
             for (AtlasRegion region : atlas.getRegions()) {
@@ -238,7 +285,7 @@ public class MenuStage extends Stage {
             float duration = animationStyle.flyInDuration;
             Interpolation interpolation = new Swing2Out();
             
-            float backgroundWhiteStartX = worldWidth * -1.0f;
+            float backgroundWhiteStartX = worldWidth * -1.25f;
             float backgroundWhiteStartY = slope * backgroundWhiteStartX;
             backgroundWhite.setPosition(backgroundWhiteStartX, backgroundWhiteStartY);
             backgroundWhite.addAction(
@@ -271,6 +318,7 @@ public class MenuStage extends Stage {
         }
         
         private void addFillings() {
+            // TODO After Effects not as part of the animation, but when the logo has already moved into place
             float afterEffectsDelay = calculateAfterEffectsDelay();
             float fillingsDelay = animationStyle.flyInDelay + animationStyle.flyInDuration;
             if (hasOutlines) {
@@ -340,22 +388,6 @@ public class MenuStage extends Stage {
             }
             return totalFlyInDuration + totalOutlinesDuration + totalFillingsDuration;
         }
-        
-        @Override
-        public void layout() {
-            if (getActions().size == 0) {
-                Stage stage = getStage();
-                float worldWidth = stage.getWidth();
-                float worldHeight = stage.getHeight();
-                
-                setScale(1);
-                if (this.width > worldWidth) {
-                    setScale((worldWidth - 2 * TitleTopPadding) / this.width);
-                }
-                // TODO Parent should take care of positioning
-                setPosition((worldWidth - getPrefWidth()) / 2, worldHeight - getPrefHeight() - TitleTopPadding);
-            }
-        }
 
         @Override
         public float getPrefWidth() {
@@ -386,8 +418,6 @@ public class MenuStage extends Stage {
         
         public static class AnimationStyle {
             
-            public static final AnimationStyle NoAnimation = new AnimationStyle(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
             public final float flyInDelay;
             public final float flyInDuration;
             public final float backgroundAlpha;
@@ -399,11 +429,15 @@ public class MenuStage extends Stage {
             public final float backgroundBlurFadeInDuration;
             public final float shadowFadeInDuration;
             
-            public AnimationStyle(MenuConfig config) {
-                this(config.getFloat(FlyInDelay), config.getFloat(FlyInDuration), config.getFloat(BackgroundAlpha), config.getFloat(BackgroundFadeOutDuration),
-                        config.getFloat(AdditionalOutlinesFadeInDelay), config.getFloat(OutlinesFadeInDuration), config.getFloat(FillingsFadeInDuration),
-                        config.getFloat(MaxAdditionalFillingsFadeInDelay), config.getFloat(BackgroundBlurFadeInDuration),
-                        config.getFloat(ShadowFadeInDuration));
+            public static AnimationStyle from(MenuConfig config) {
+                if (config.getBoolean(LogoAnimation)) {
+                    return new AnimationStyle(config.getFloat(FlyInDelay), config.getFloat(FlyInDuration), config.getFloat(BackgroundAlpha),
+                            config.getFloat(BackgroundFadeOutDuration), config.getFloat(AdditionalOutlinesFadeInDelay), config.getFloat(OutlinesFadeInDuration),
+                            config.getFloat(FillingsFadeInDuration), config.getFloat(MaxAdditionalFillingsFadeInDelay),
+                            config.getFloat(BackgroundBlurFadeInDuration), config.getFloat(ShadowFadeInDuration));
+                } else {
+                    return new AnimationStyle(0, 0, config.getFloat(BackgroundAlpha), 0, 0, 0, 0, 0, 0, 0);
+                }
             }
             
             public AnimationStyle(float flyInDelay, float flyInDuration, float backgroundAlpha, float backgroundFadeOutDuration,
