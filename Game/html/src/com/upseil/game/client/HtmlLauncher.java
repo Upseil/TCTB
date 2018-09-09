@@ -1,11 +1,6 @@
 package com.upseil.game.client;
 
-import static com.upseil.game.Constants.GameInit.Height;
-import static com.upseil.game.Constants.GameInit.MinHeight;
-import static com.upseil.game.Constants.GameInit.MinWidth;
-import static com.upseil.game.Constants.GameInit.PrefHeight;
-import static com.upseil.game.Constants.GameInit.PrefWidth;
-import static com.upseil.game.Constants.GameInit.Width;
+import static com.upseil.game.Constants.GameInit.*;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.ApplicationLogger;
@@ -166,6 +161,7 @@ public class HtmlLauncher extends GwtApplication {
         GwtApplicationConfiguration configuration = new GwtApplicationConfiguration(width, height);
         configuration.preferFlash = false;
         configuration.rootPanel = rootPanel;
+        configuration.antialiasing = GameInit.getInt(MsaaSamples) > 0;
         return configuration;
     }
 
