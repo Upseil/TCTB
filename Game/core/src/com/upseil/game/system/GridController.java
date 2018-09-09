@@ -95,7 +95,7 @@ public class GridController extends BaseSystem {
         timeScaleAlterationRate = (1 - minSlowMoTimeScale) * config.getFloat(TimeScaleAlterationRate);
         timeScaleIncreaseInterpolation = config.getEnum(TimeScaleIncreaseInterpolation, BuiltInInterpolation.class).get();
         timeScaleDecreaseInterpolation = config.getEnum(TimeScaleDecreaseInterpolation, BuiltInInterpolation.class).get();
-        loseEpsilon = 0.1f;
+        loseEpsilon = 0.25f;
         
         float worldSize = config.getFloat(GridSize) * (config.getFloat(CellSize) + config.getFloat(Spacing)) + 2 * config.getFloat(BorderSize);
         screenPadding = new PaddedScreen();
