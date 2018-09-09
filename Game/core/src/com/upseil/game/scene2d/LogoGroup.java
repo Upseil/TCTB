@@ -12,6 +12,7 @@ import static com.upseil.game.Config.MenuConfigValues.FillingsFadeInDuration;
 import static com.upseil.game.Config.MenuConfigValues.FlyInDelay;
 import static com.upseil.game.Config.MenuConfigValues.FlyInDuration;
 import static com.upseil.game.Config.MenuConfigValues.LogoAnimation;
+import static com.upseil.game.Config.MenuConfigValues.LogoMoveDuration;
 import static com.upseil.game.Config.MenuConfigValues.MaxAdditionalFillingsFadeInDelay;
 import static com.upseil.game.Config.MenuConfigValues.OutlinesFadeInDuration;
 import static com.upseil.game.Config.MenuConfigValues.ShadowFadeInDuration;
@@ -37,8 +38,6 @@ public class LogoGroup extends WidgetGroup implements Disposable {
     
     private float highestAdditionalFillingsFadeInDelay;
     private boolean hasOutlines;
-    private boolean hasShadows;
-    private boolean hasBlur;
     
     public LogoGroup(float worldWidth, LogoGroup.AnimationStyle animationStyle) {
         this.animationStyle = animationStyle;
@@ -57,8 +56,6 @@ public class LogoGroup extends WidgetGroup implements Disposable {
             }
             
             hasOutlines |= region.name.startsWith("outline");
-            hasShadows |= region.name.startsWith("shadow");
-            hasBlur |= region.name.endsWith("blur");
         }
         
         addBackground(worldWidth);
@@ -96,7 +93,7 @@ public class LogoGroup extends WidgetGroup implements Disposable {
             delay(delay, moveTo(backgroundBlackRegion.offsetX, backgroundBlackRegion.offsetY, duration, interpolation))
         );
         
-        float afterEffectsDelay = calculateAfterEffectsDelay();
+        float afterEffectsDelay = getAnimationDuration() + animationStyle.afterEffectsDelay;
         float afterAlpha = animationStyle.backgroundAlpha;
         backgroundWhite.addAction(delay(afterEffectsDelay, alpha(afterAlpha, animationStyle.backgroundFadeOutDuration, Interpolation.fade)));
         backgroundBlack.addAction(delay(afterEffectsDelay, alpha(afterAlpha, animationStyle.backgroundFadeOutDuration, Interpolation.fade)));
@@ -105,7 +102,8 @@ public class LogoGroup extends WidgetGroup implements Disposable {
     private void addBackgroundBlur() {
         AtlasRegion region = regionMap.get("background-blur");
         if (region != null) {
-            Image backgroundBlur = createFadeInImage(region, calculateAfterEffectsDelay(), animationStyle.backgroundBlurFadeInDuration);
+            float afterEffectsDelay = getAnimationDuration() + animationStyle.afterEffectsDelay;
+            Image backgroundBlur = createFadeInImage(region, afterEffectsDelay, animationStyle.backgroundBlurFadeInDuration);
             backgroundBlur.moveBy(
                 (width - backgroundBlur.getPrefWidth()) / 2,
                 (height - backgroundBlur.getPrefHeight()) / 2
@@ -115,8 +113,7 @@ public class LogoGroup extends WidgetGroup implements Disposable {
     }
     
     private void addFillings() {
-        // TODO After Effects not as part of the animation, but when the logo has already moved into place
-        float afterEffectsDelay = calculateAfterEffectsDelay();
+        float afterEffectsDelay = getAnimationDuration() + animationStyle.afterEffectsDelay;
         float fillingsDelay = animationStyle.flyInDelay + animationStyle.flyInDuration;
         if (hasOutlines) {
             fillingsDelay += animationStyle.additionalOutlinesFadeInDelay + animationStyle.outlinesFadeInDuration * 0.5f;
@@ -171,12 +168,6 @@ public class LogoGroup extends WidgetGroup implements Disposable {
     }
     
     public float getAnimationDuration() {
-        float totalShadowsDuration = hasShadows ? animationStyle.shadowFadeInDuration : 0;
-        float totalBlurDuration = hasBlur ? animationStyle.backgroundBlurFadeInDuration : 0;
-        return calculateAfterEffectsDelay() + totalShadowsDuration + totalBlurDuration;
-    }
-    
-    private float calculateAfterEffectsDelay() {
         float totalFlyInDuration = animationStyle.flyInDelay + animationStyle.flyInDuration;
         float totalFillingsDuration = highestAdditionalFillingsFadeInDelay + animationStyle.fillingsFadeInDuration * 0.5f;
         float totalOutlinesDuration = 0;
@@ -217,12 +208,16 @@ public class LogoGroup extends WidgetGroup implements Disposable {
         
         public final float flyInDelay;
         public final float flyInDuration;
+        
         public final float backgroundAlpha;
         public final float backgroundFadeOutDuration;
+        
         public final float additionalOutlinesFadeInDelay;
         public final float outlinesFadeInDuration;
-        public final float fillingsFadeInDuration;
         public final float maxAdditionalFillingsFadeInDelay;
+        public final float fillingsFadeInDuration;
+        
+        public final float afterEffectsDelay;
         public final float backgroundBlurFadeInDuration;
         public final float shadowFadeInDuration;
         
@@ -230,16 +225,16 @@ public class LogoGroup extends WidgetGroup implements Disposable {
             if (config.getBoolean(LogoAnimation)) {
                 return new AnimationStyle(config.getFloat(FlyInDelay), config.getFloat(FlyInDuration), config.getFloat(BackgroundAlpha),
                         config.getFloat(BackgroundFadeOutDuration), config.getFloat(AdditionalOutlinesFadeInDelay), config.getFloat(OutlinesFadeInDuration),
-                        config.getFloat(FillingsFadeInDuration), config.getFloat(MaxAdditionalFillingsFadeInDelay),
+                        config.getFloat(FillingsFadeInDuration), config.getFloat(MaxAdditionalFillingsFadeInDelay), config.getFloat(LogoMoveDuration),
                         config.getFloat(BackgroundBlurFadeInDuration), config.getFloat(ShadowFadeInDuration));
             } else {
-                return new AnimationStyle(0, 0, config.getFloat(BackgroundAlpha), 0, 0, 0, 0, 0, 0, 0);
+                return new AnimationStyle(0, 0, config.getFloat(BackgroundAlpha), 0, 0, 0, 0, 0, 0, 0, 0);
             }
         }
         
         public AnimationStyle(float flyInDelay, float flyInDuration, float backgroundAlpha, float backgroundFadeOutDuration,
                 float additionalOutlinesFadeInDelay, float outlinesFadeInDuration, float fillingsFadeInDuration, float maxAdditionalFillingsFadeInDelay,
-                float backgroundBlurFadeInDuration, float shadowFadeInDuration) {
+                float afterEffectsDelay, float backgroundBlurFadeInDuration, float shadowFadeInDuration) {
             this.flyInDelay = flyInDelay;
             this.flyInDuration = flyInDuration;
             this.backgroundAlpha = backgroundAlpha;
@@ -248,6 +243,7 @@ public class LogoGroup extends WidgetGroup implements Disposable {
             this.outlinesFadeInDuration = outlinesFadeInDuration;
             this.fillingsFadeInDuration = fillingsFadeInDuration;
             this.maxAdditionalFillingsFadeInDelay = maxAdditionalFillingsFadeInDelay;
+            this.afterEffectsDelay = afterEffectsDelay;
             this.backgroundBlurFadeInDuration = backgroundBlurFadeInDuration;
             this.shadowFadeInDuration = shadowFadeInDuration;
         }
