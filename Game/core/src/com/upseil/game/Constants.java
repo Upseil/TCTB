@@ -3,7 +3,7 @@ package com.upseil.game;
 public final class Constants {
     
     public static enum GameInit { 
-        Title, MsaaSamples, Resizable, Width, Height, MinWidth, MinHeight, PrefWidth, PrefHeight
+        Title, MsaaSamples, Resizable, Width, Height, MinWidth, MinHeight, PrefWidth, PrefHeight, WindowPadding
     }
 
     public static enum Tag {

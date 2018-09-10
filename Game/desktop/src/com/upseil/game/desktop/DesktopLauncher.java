@@ -40,7 +40,8 @@ public class DesktopLauncher {
         loadSizeInformation(gameInit);
         
         DisplayMode display = LwjglApplicationConfiguration.getDesktopDisplayMode();
-        calculateSize(display.width, display.height);
+        int windowPadding = gameInit.getInt(WindowPadding);
+        calculateSize(display.width - windowPadding, display.height - windowPadding);
         
         LwjglApplicationConfiguration configuration = new LwjglApplicationConfiguration();
         configuration.title = gameInit.get(Title);
